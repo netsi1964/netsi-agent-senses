@@ -1,0 +1,24 @@
+{"schemaVersion":1,"ts":1760900000000,"session":"fixture-spiral","kind":"prompt","source":"claude-code"}
+{"schemaVersion":1,"ts":1760900005000,"session":"fixture-spiral","kind":"tool_call","source":"claude-code","tool":"Read"}
+{"schemaVersion":1,"ts":1760900006000,"session":"fixture-spiral","kind":"tool_result","source":"claude-code","tool":"Read","ok":true}
+{"schemaVersion":1,"ts":1760900010000,"session":"fixture-spiral","kind":"tool_call","source":"claude-code","tool":"Bash"}
+{"schemaVersion":1,"ts":1760900014000,"session":"fixture-spiral","kind":"tool_result","source":"claude-code","tool":"Bash","ok":true,"exitCode":0}
+{"schemaVersion":1,"ts":1760900020000,"session":"fixture-spiral","kind":"token_usage","source":"claude-code","tokens":{"used":42000}}
+{"schemaVersion":1,"ts":1760900030000,"session":"fixture-spiral","kind":"tool_call","source":"claude-code","tool":"Bash"}
+{"schemaVersion":1,"ts":1760900033000,"session":"fixture-spiral","kind":"tool_result","source":"claude-code","tool":"Bash","ok":false,"exitCode":1}
+{"schemaVersion":1,"ts":1760900040000,"session":"fixture-spiral","kind":"tool_call","source":"claude-code","tool":"Bash"}
+{"schemaVersion":1,"ts":1760900044000,"session":"fixture-spiral","kind":"tool_result","source":"claude-code","tool":"Bash","ok":false,"exitCode":1}
+{"schemaVersion":1,"ts":1760900050000,"session":"fixture-spiral","kind":"tool_call","source":"claude-code","tool":"Bash"}
+{"schemaVersion":1,"ts":1760900052000,"session":"fixture-spiral","kind":"tool_result","source":"claude-code","tool":"Bash","ok":false,"exitCode":2}
+{"schemaVersion":1,"ts":1760900060000,"session":"fixture-spiral","kind":"tool_call","source":"claude-code","tool":"Bash"}
+{"schemaVersion":1,"ts":1760900065000,"session":"fixture-spiral","kind":"tool_result","source":"claude-code","tool":"Bash","ok":true,"exitCode":0,"signals":7}
+{"schemaVersion":1,"ts":1760900070000,"session":"fixture-spiral","kind":"tool_call","source":"claude-code","tool":"Bash"}
+{"schemaVersion":1,"ts":1760900071000,"session":"fixture-spiral","kind":"tool_result","source":"claude-code","tool":"Bash","ok":false,"exitCode":1}
+{"schemaVersion":1,"ts":1760900080000,"session":"fixture-spiral","kind":"tool_call","source":"claude-code","tool":"Bash"}
+{"schemaVersion":1,"ts":1760900083000,"session":"fixture-spiral","kind":"tool_result","source":"claude-code","tool":"Bash","ok":false,"exitCode":1}
+{"schemaVersion":1,"ts":1760900090000,"session":"fixture-spiral","kind":"tool_call","source":"claude-code","tool":"Bash"}
+{"schemaVersion":1,"ts":1760900091000,"session":"fixture-spiral","kind":"tool_result","source":"claude-code","tool":"Bash","ok":false,"exitCode":1}
+{"schemaVersion":1,"ts":1760900095000,"session":"fixture-spiral","kind":"token_usage","source":"claude-code","tokens":{"used":168000,"limit":200000}}
+{"schemaVersion":1,"ts":1760900100000,"session":"fixture-spiral","kind":"turn_end","source":"claude-code"}
+{"broken json
+{"schemaVersion": 1, "ts": 1760900000000, "session": "fixture-spiral", "kind": "teleport", "source": "claude-code"}
