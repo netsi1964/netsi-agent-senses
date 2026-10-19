@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "senses": {
+      "command": "sh",
+      "args": [
+        "-c",
+        "exec deno run -q --no-lock --allow-env=CLAUDE_PROJECT_DIR,NETSI_SENSES_DIR --allow-read=\"${NETSI_SENSES_DIR:-$CLAUDE_PROJECT_DIR/.netsi-agent-senses}\" --allow-write=\"${NETSI_SENSES_DIR:-$CLAUDE_PROJECT_DIR/.netsi-agent-senses}\" \"$0\"",
+        "${CLAUDE_PLUGIN_ROOT}/src/mcp/server.ts"
+      ],
+      "env": { "CLAUDE_PROJECT_DIR": "${CLAUDE_PROJECT_DIR}" }
+    }
+  }
+}
