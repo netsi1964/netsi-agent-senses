@@ -1,12 +1,15 @@
 # netsi-agent-senses
 
-Human-like senses (pain, interoception, time, smell, gut feeling) for AI agent harnesses, readable by the agent over MCP and tunable by the human in a dashboard. Claude Code plugin first, Codex later. Pre-alpha.
+Human-like senses (pain, interoception, time, smell, gut feeling) for AI agent harnesses, readable by the agent over MCP and tunable by the human in a dashboard. Claude Code plugin first, Codex later. Alpha.
 
 ## Documentation Index
 - [README](README.md)
 - [AGENTS](AGENTS.md)
 - [memory](memory.md)
 - [PRD (Danish)](development/PRD.md)
+- [Sensors](docs/sensors.md)
+- [Adapters](docs/adapters.md)
+- [Configuration](docs/configuration.md)
 - [CONTRIBUTING](CONTRIBUTING.md)
 - [SECURITY](SECURITY.md)
 - [CHANGELOG](CHANGELOG.md)
