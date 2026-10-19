@@ -1,0 +1,19 @@
+.DS_Store
+node_modules/
+*.log
+*.tmp
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Build / test output
+dist/
+coverage/
+
+# Runtime data written by the senses themselves (events, audit log, local state)
+.netsi-agent-senses/
+
+# Personal Claude Code settings
+.claude/settings.local.json

@@ -1,0 +1,9 @@
+{
+  "name": "netsi-agent-senses",
+  "version": "0.0.0",
+  "description": "Human-like senses for AI agent harnesses: pain, interoception, time, smell and gut feeling as readable, tunable sensors for Claude Code (Codex later).",
+  "author": { "name": "Sten Hougaard", "url": "https://netsi.dk" },
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/netsi1964/netsi-agent-senses",
+  "keywords": ["agent", "senses", "observability", "mcp", "hooks", "claude-code"]
+}
