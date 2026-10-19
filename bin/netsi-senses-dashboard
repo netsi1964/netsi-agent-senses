@@ -1,0 +1,33 @@
+#!/bin/sh
+# Start the local senses dashboard (or reuse a running one) and print its URL.
+# Binds to 127.0.0.1 only; the URL carries a random token (PRD-SEC-007).
+set -e
+command -v deno >/dev/null 2>&1 || { echo "netsi-agent-senses: deno is not installed (https://deno.com)"; exit 1; }
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+DATA="${NETSI_SENSES_DIR:-${CLAUDE_PROJECT_DIR:-$PWD}/.netsi-agent-senses}"
+INFO="$DATA/dashboard.json"
+
+url_from_info() { sed -n 's/.*"url": *"\([^"]*\)".*/\1/p' "$INFO" 2>/dev/null; }
+
+if [ -f "$INFO" ]; then
+  URL="$(url_from_info)"
+  API="$(printf '%s' "$URL" | sed 's#/?token=#/api/state?token=#')"
+  if [ -n "$URL" ] && curl -fsS -o /dev/null --max-time 2 "$API" 2>/dev/null; then
+    echo "$URL"
+    exit 0
+  fi
+  rm -f "$INFO"
+fi
+
+mkdir -p "$DATA"
+nohup deno run -q --no-lock \
+  --allow-net=127.0.0.1 \
+  --allow-env=CLAUDE_PROJECT_DIR,NETSI_SENSES_DIR,NETSI_SENSES_PORT \
+  --allow-read="$DATA,$ROOT/dashboard" --allow-write="$DATA" \
+  "$ROOT/src/http/server.ts" >"$DATA/dashboard.log" 2>&1 &
+
+i=0
+while [ ! -s "$INFO" ] && [ $i -lt 50 ]; do sleep 0.1; i=$((i + 1)); done
+URL="$(url_from_info)"
+[ -n "$URL" ] || { echo "netsi-agent-senses: dashboard did not start, see $DATA/dashboard.log"; exit 1; }
+echo "$URL"
