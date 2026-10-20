@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>netsi-agent-senses</title>
+<style>
+  :root {
+    --bg: #f6f6f3; --card: #ffffff; --fg: #1b1c1f; --muted: #575a61; --line: #d6d6d0;
+    --track: #e4e4de; --accent: #0a6a70; --warn: #a8261c; --agent: #5f3596; --agent-bg: #f1eafb;
+    --banner: #fff4d6; --banner-fg: #5a4100; --ok: #1d6b2c; --focus: #1a5fd0;
+  }
+  :root[data-theme="dark"] {
+    --bg: #121316; --card: #1c1e23; --fg: #ececec; --muted: #a9abb2; --line: #34373e;
+    --track: #2c2f35; --accent: #4fc6cc; --warn: #ff8f84; --agent: #c9a8ff; --agent-bg: #2a2236;
+    --banner: #3a2f10; --banner-fg: #ffe3a1; --ok: #7fd690; --focus: #8ab4ff;
+  }
+  * { box-sizing: border-box; }
+  html { color-scheme: light; }
+  :root[data-theme="dark"] { color-scheme: dark; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg); line-height: 1.45;
+    font-family: Avenir, Montserrat, Corbel, 'URW Gothic', source-sans-pro, sans-serif; font-weight: normal;
+  }
+  h1, h2, h3, strong, th, b { font-weight: normal; }
+  h1 { font-size: 1.25rem; margin: 0; }
+  h2 { font-size: 1.1rem; margin: 1.6rem 0 .6rem; letter-spacing: .02em; }
+  h3 { font-size: 1.05rem; margin: 0; }
+  a { color: var(--accent); }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px 48px; }
+  header.top { display: flex; flex-wrap: wrap; gap: .6rem 1rem; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--line); }
+  header.top .tools { display: flex; flex-wrap: wrap; gap: .5rem .9rem; align-items: center; font-size: .9rem; }
+  .muted { color: var(--muted); }
+  .small { font-size: .85rem; }
+  button, select, input { font: inherit; color: inherit; }
+  button { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: .3rem .7rem; cursor: pointer; }
+  button.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  button:disabled { opacity: .5; cursor: default; }
+  .conn { display: inline-flex; align-items: center; gap: .35rem; }
+  .dot { width: .65rem; height: .65rem; border-radius: 50%; display: inline-block; border: 2px solid currentColor; }
+  .conn[data-s="live"] .dot { background: var(--ok); color: var(--ok); }
+  .conn[data-s="polling"] .dot { background: transparent; color: var(--accent); }
+  .conn[data-s="offline"] .dot { background: transparent; color: var(--warn); border-style: dashed; }
+  .banner { background: var(--banner); color: var(--banner-fg); border: 1px solid currentColor; border-radius: 8px; padding: .6rem .9rem; margin-top: 1rem; }
+  .banner ul { margin: .3rem 0 0; padding-left: 1.2rem; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+  .badge { display: inline-block; font-size: .78rem; border: 1px solid currentColor; border-radius: 999px; padding: 0 .5rem; margin: 0 .25rem .2rem 0; white-space: nowrap; }
+  .badge.trig { color: var(--warn); border-width: 2px; }
+  .badge.low { color: var(--banner-fg); background: var(--banner); }
+  .badge.off { color: var(--muted); border-style: dashed; }
+  /* gut */
+  .gut { display: grid; grid-template-columns: minmax(200px, 300px) 1fr; gap: 1rem 1.6rem; align-items: center; margin-top: 1rem; }
+  .gut svg.arc { width: 100%; height: auto; display: block; }
+  .gut .big { font-size: 2.6rem; line-height: 1; }
+  .gut .lbl { font-size: 1.15rem; margin: .3rem 0; }
+  .gut.trig { border: 2px solid var(--warn); }
+  @media (max-width: 640px) { .gut { grid-template-columns: 1fr; } .gut svg.arc { max-width: 280px; margin: 0 auto; } }
+  /* senses */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 14px; }
+  sense-gauge { display: block; }
+  sense-gauge .card { height: 100%; }
+  sense-gauge.trig .card { border: 2px solid var(--warn); }
+  sense-gauge.off .view { opacity: .55; filter: grayscale(1); }
+  .head { display: flex; justify-content: space-between; gap: .5rem; align-items: baseline; flex-wrap: wrap; }
+  .val { display: flex; align-items: baseline; gap: .6rem; margin: .4rem 0 .2rem; flex-wrap: wrap; }
+  .val .num { font-size: 1.9rem; line-height: 1; }
+  svg.bar, svg.spark { width: 100%; display: block; overflow: visible; }
+  svg.spark { height: 38px; margin-top: .3rem; }
+  .agentmark { margin-top: .6rem; padding: .45rem .6rem; border-left: 4px solid var(--agent); background: var(--agent-bg); color: var(--fg); border-radius: 4px; font-size: .88rem; }
+  .agentmark b { color: var(--agent); }
+  .empty { color: var(--muted); font-style: italic; margin: 0; padding: .8rem; border: 1px dashed var(--line); border-radius: 8px; }
+  /* settings */
+  details.settings { margin-top: .7rem; border-top: 1px solid var(--line); padding-top: .5rem; }
+  details.settings > summary { cursor: pointer; color: var(--accent); }
+  .form { display: grid; gap: .6rem; margin-top: .6rem; font-size: .9rem; }
+  .field { display: grid; grid-template-columns: 5.2rem 1fr; gap: .3rem .5rem; align-items: center; }
+  .field .ctl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  .field input[type=number] { width: 5.6rem; padding: .2rem .3rem; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); }
+  .field input[type=range] { flex: 1 1 110px; min-width: 90px; accent-color: var(--accent); }
+  .field .bounds { grid-column: 2; display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; color: var(--muted); }
+  .field .bounds input { width: 4.8rem; }
+  .form select, .form input[type=text] { padding: .25rem .4rem; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); }
+  .form input[type=text] { width: 100%; }
+  .form .row { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+  .errors { color: var(--warn); margin: 0; padding-left: 1.2rem; }
+  .note { color: var(--muted); font-size: .85rem; }
+  .note.paused { color: var(--banner-fg); background: var(--banner); padding: .2rem .4rem; border-radius: 4px; }
+  .saved { color: var(--ok); }
+  input.bad { border-color: var(--warn) !important; outline: 1px solid var(--warn); }
+  /* table */
+  .tablewrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: .9rem; background: var(--card); }
+  th, td { text-align: left; padding: .4rem .6rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); }
+  tr.agent td { background: var(--agent-bg); }
+  tr.agent td.who { color: var(--agent); }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  footer { margin-top: 2rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>netsi-agent-senses <span class="muted small">dashboard</span></h1>
+    <div class="tools">
+      <span class="conn" id="conn" data-s="offline" role="status" aria-live="polite"><span class="dot" aria-hidden="true"></span><span id="conntext">connecting…</span></span>
+      <span class="muted small" id="updated"></span>
+      <a id="export" download="audit.jsonl">Export audit log</a>
+      <button id="theme" type="button" aria-pressed="false">Dark mode</button>
+    </div>
+  </header>
+  <div id="banners"></div>
+  <main>
+    <section aria-labelledby="gut-h">
+      <h2 id="gut-h">Gut feeling</h2>
+      <div id="gut"></div>
+    </section>
+    <div id="cats"></div>
+    <section aria-labelledby="changes-h">
+      <h2 id="changes-h">Recent changes</h2>
+      <div class="tablewrap" id="changes"></div>
+    </section>
+  </main>
+  <footer class="muted small">Values are 0..1. Faded, hatched fills mean low confidence: treat them as a guess, not a measurement.</footer>
+</div>
+<script>
+"use strict";
+// ---------- helpers (no innerHTML with data: everything goes through textContent) ----------
+const SVGNS = "http://www.w3.org/2000/svg";
+const TOKEN = new URLSearchParams(location.search).get("token") || "";
+const api = (p) => `${p}?token=${encodeURIComponent(TOKEN)}`;
+const LOW_CONF = 0.5;
+const FIELDS = ["gain", "threshold", "window"];
+const ACTIONS = ["inform", "warn", "block", "influence"];
+const CATS = [["classic", "Classic"], ["bodily", "Bodily"], ["social", "Social"], ["temporal", "Temporal"]];
+let uid = 0;
+
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  setAttrs(el, attrs);
+  for (const k of kids.flat()) if (k != null && k !== false) el.append(k instanceof Node ? k : String(k));
+  return el;
+}
+function s(tag, attrs, ...kids) {
+  const el = document.createElementNS(SVGNS, tag);
+  setAttrs(el, attrs);
+  for (const k of kids.flat()) if (k != null && k !== false) el.append(k instanceof Node ? k : String(k));
+  return el;
+}
+function setAttrs(el, attrs) {
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === "text") el.textContent = v;
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (k in el && typeof v !== "string" && el.namespaceURI !== SVGNS) el[k] = v;
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+}
+const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
+const f2 = (v) => (Number.isFinite(Number(v)) ? Number(v).toFixed(2) : "–");
+const fmtNum = (v) => (typeof v === "number" ? String(Math.round(v * 1000) / 1000) : String(v));
+function relTime(ts, now) {
+  const d = Math.max(0, Math.round((now - ts) / 1000));
+  if (d < 10) return "just now";
+  if (d < 60) return `${d} s ago`;
+  if (d < 3600) return `${Math.round(d / 60)} min ago`;
+  if (d < 86400) return `${Math.round(d / 3600)} h ago`;
+  return `${Math.round(d / 86400)} d ago`;
+}
+const clock = (ts) => new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+function dur(sec) {
+  if (!Number.isFinite(sec)) return "";
+  if (sec < 120) return `${sec} s`;
+  if (sec < 7200) return `${Math.round(sec / 60)} min`;
+  return `${Math.round(sec / 360) / 10} h`;
+}
+function short(v) {
+  let t;
+  try { t = typeof v === "string" ? v : JSON.stringify(v); } catch { t = String(v); }
+  return t && t.length > 80 ? t.slice(0, 77) + "…" : (t ?? "–");
+}
+/** "threshold 0.6 → 0.7" for {threshold:0.6} → {threshold:0.7}, generic otherwise. */
+function fromTo(e) {
+  const isObj = (o) => o && typeof o === "object" && !Array.isArray(o);
+  if (isObj(e.from) && isObj(e.to)) {
+    const keys = [...new Set([...Object.keys(e.from), ...Object.keys(e.to)])];
+    return keys.map((k) => `${k} ${short(fmtV(e.from[k]))} → ${short(fmtV(e.to[k]))}`).join(", ");
+  }
+  if (e.from === undefined && e.to === undefined) return "–";
+  return `${short(fmtV(e.from))} → ${short(fmtV(e.to))}`;
+}
+const fmtV = (v) => (v === undefined ? "–" : typeof v === "number" ? fmtNum(v) : v);
+const deepClone = (o) => JSON.parse(JSON.stringify(o));
+
+// ---------- app state ----------
+const app = { state: null, lastUpdate: 0 };
+
+async function putConfig(config, reason) {
+  try {
+    const res = await fetch(api("/api/config"), {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ config, reason: reason || "changed in dashboard" }),
+    });
+    let body = null;
+    try { body = await res.json(); } catch { /* not JSON */ }
+    if (res.ok && body && body.ok) { await refresh(); return { ok: true }; }
+    const errs = body && Array.isArray(body.errors) ? body.errors.map(String) : [`server answered ${res.status}`];
+    return { ok: false, errors: errs };
+  } catch (err) {
+    return { ok: false, errors: [`could not reach the server: ${err.message}`] };
+  }
+}
+
+// ---------- settings form (shared by senses and gut) ----------
+/** A numeric field: number + range input, optionally with min/max bound inputs. */
+function numField(name, label, { step, min, max, bounds, onchange }) {
+  const id = `f${++uid}`;
+  const num = h("input", { type: "number", id, step: "any", inputmode: "decimal" });
+  const rng = h("input", { type: "range", step, min, max, "aria-label": `${label} slider` });
+  const field = { name, num, rng, lo: null, hi: null };
+  num.addEventListener("input", () => { rng.value = num.value; onchange(); });
+  rng.addEventListener("input", () => { num.value = rng.value; onchange(); });
+  const row = h("div", { class: "field" }, h("label", { for: id, text: label }), h("div", { class: "ctl" }, num, rng));
+  if (bounds) {
+    field.lo = h("input", { type: "number", step: "any", "aria-label": `${label} minimum` });
+    field.hi = h("input", { type: "number", step: "any", "aria-label": `${label} maximum` });
+    const syncRange = () => { rng.min = field.lo.value; rng.max = field.hi.value; rng.value = num.value; onchange(); };
+    field.lo.addEventListener("input", syncRange);
+    field.hi.addEventListener("input", syncRange);
+    row.append(h("div", { class: "bounds" }, "bounds min", field.lo, "max", field.hi));
+  }
+  field.row = row;
+  return field;
+}
+
+/** Wraps a settings panel with dirty tracking, reason, save, cancel and inline errors. */
+function settingsPanel(summaryText, bodyEls, { onSave, onCancel }) {
+  const errors = h("ul", { class: "errors", "aria-live": "polite" });
+  const note = h("p", { class: "note", "aria-live": "polite" });
+  const reason = h("input", { type: "text", placeholder: "changed in dashboard", maxlength: "200", id: `r${++uid}` });
+  const save = h("button", { type: "button", class: "primary", text: "Save" });
+  const cancel = h("button", { type: "button", text: "Cancel" });
+  const panel = {
+    dirty: false,
+    el: h("details", { class: "settings" }, h("summary", { text: summaryText }),
+      h("div", { class: "form" }, bodyEls,
+        h("div", {}, h("label", { for: reason.id, class: "muted small", text: "Reason (optional)" }), reason),
+        h("div", { class: "row" }, save, cancel), note, errors)),
+    markDirty() {
+      panel.dirty = true;
+      note.className = "note paused";
+      note.textContent = "Unsaved changes. Live updates are paused for this panel until you save or cancel.";
+    },
+    showErrors(list) { errors.replaceChildren(...list.map((e) => h("li", { text: e }))); },
+    reset() { panel.dirty = false; note.className = "note"; note.textContent = ""; panel.showErrors([]); reason.value = ""; },
+  };
+  save.addEventListener("click", async () => {
+    const local = onSave.validate();
+    if (local.length) { panel.showErrors(local); return; }
+    save.disabled = true; note.className = "note"; note.textContent = "Saving…";
+    const res = await putConfig(onSave.build(), reason.value.trim());
+    save.disabled = false;
+    if (res.ok) {
+      panel.reset();
+      note.className = "note saved"; note.textContent = "Saved.";
+      onCancel(); // re-fill from the latest state
+    } else {
+      panel.markDirty(); panel.showErrors(res.errors);
+    }
+  });
+  cancel.addEventListener("click", () => { panel.reset(); onCancel(); });
+  return panel;
+}
+
+function readNum(input) {
+  const v = input.value.trim() === "" ? NaN : Number(input.value);
+  return v;
+}
+
+// ---------- <sense-gauge> ----------
+class SenseGauge extends HTMLElement {
+  constructor() {
+    super();
+    this.built = false;
+    this.pat = `hatch${++uid}`;
+  }
+  set data(d) { this._d = d; if (!this.built) this.build(); this.render(); }
+  get data() { return this._d; }
+
+  build() {
+    this.built = true;
+    const sid = this._d.state.id;
+    this.view = h("div", { class: "view" });
+    this.marker = h("div");
+    const changed = () => { this.panel.markDirty(); this.validate(true); };
+    this.enabled = h("input", { type: "checkbox", id: `e${++uid}`, onchange: changed });
+    this.fields = {
+      gain: numField("gain", "Gain", { step: "0.05", min: 0, max: 3, bounds: true, onchange: changed }),
+      threshold: numField("threshold", "Threshold", { step: "0.01", min: 0, max: 1, bounds: true, onchange: changed }),
+      window: numField("window", "Window (s)", { step: "30", min: 0, max: 14400, bounds: true, onchange: changed }),
+    };
+    this.action = h("select", { id: `a${++uid}`, onchange: changed }, ACTIONS.map((a) => h("option", { value: a, text: a })));
+    const body = [
+      h("div", { class: "row" }, this.enabled, h("label", { for: this.enabled.id, text: "Enabled" })),
+      ...FIELDS.map((f) => this.fields[f].row),
+      h("div", { class: "row" }, h("label", { for: this.action.id, text: "Action" }), this.action),
+    ];
+    this.panel = settingsPanel(`Settings for ${sid}`, body, {
+      onSave: { validate: () => this.validate(false), build: () => this.buildConfig() },
+      onCancel: () => this.fillForm(),
+    });
+    this.append(h("article", { class: "card", "aria-label": `Sense ${sid}` }, this.view, this.marker, this.panel.el));
+  }
+
+  fillForm() {
+    const cfg = this._d.cfg;
+    if (!cfg) return;
+    this.enabled.checked = !!cfg.enabled;
+    for (const f of FIELDS) {
+      const fld = this.fields[f];
+      const [lo, hi] = (cfg.bounds && cfg.bounds[f]) || [fld.rng.min, fld.rng.max];
+      fld.lo.value = lo; fld.hi.value = hi;
+      fld.rng.min = lo; fld.rng.max = hi;
+      fld.num.value = cfg[f]; fld.rng.value = cfg[f];
+      fld.num.classList.remove("bad"); fld.lo.classList.remove("bad"); fld.hi.classList.remove("bad");
+    }
+    this.action.value = cfg.action;
+  }
+
+  /** Client-side checks; the server stays authoritative. */
+  validate(quiet) {
+    const errs = [];
+    const lim = { gain: [0, 10, false], threshold: [0, 1, true], window: [0, 604800, false] };
+    for (const f of FIELDS) {
+      const fld = this.fields[f];
+      const v = readNum(fld.num), lo = readNum(fld.lo), hi = readNum(fld.hi);
+      let bad = false, badB = false;
+      if (!Number.isFinite(v)) { errs.push(`${f} must be a number`); bad = true; }
+      if (!Number.isFinite(lo) || !Number.isFinite(hi)) { errs.push(`${f} bounds must be numbers`); badB = true; }
+      else if (lo > hi) { errs.push(`${f} bounds: min (${lo}) must be <= max (${hi})`); badB = true; }
+      else if (!bad && (v < lo || v > hi)) { errs.push(`${f} (${v}) is outside its bounds [${lo}, ${hi}]`); bad = true; }
+      const [mn, mx, incl] = lim[f];
+      if (!bad && (v > mx || (incl ? v < mn : v <= mn))) { errs.push(`${f} must be in ${incl ? "[" : "("}${mn}, ${mx}]`); bad = true; }
+      fld.num.classList.toggle("bad", bad);
+      fld.lo.classList.toggle("bad", badB); fld.hi.classList.toggle("bad", badB);
+    }
+    if (!quiet) return errs;
+    this.panel.showErrors(errs);
+    return errs;
+  }
+
+  buildConfig() {
+    const config = deepClone(app.state.config);
+    const id = this._d.state.id;
+    const bounds = {};
+    for (const f of FIELDS) bounds[f] = [readNum(this.fields[f].lo), readNum(this.fields[f].hi)];
+    config.senses[id] = {
+      ...(config.senses[id] || {}),
+      enabled: this.enabled.checked,
+      gain: readNum(this.fields.gain.num),
+      threshold: readNum(this.fields.threshold.num),
+      window: readNum(this.fields.window.num),
+      bounds,
+      action: this.action.value,
+    };
+    return config;
+  }
+
+  render() {
+    const { state: st, cfg, history, lastChange, now } = this._d;
+    const on = st.enabled !== false;
+    const trig = on && !!st.triggered;
+    const conf = clamp01(st.confidence);
+    const low = conf < LOW_CONF;
+    this.classList.toggle("trig", trig);
+    this.classList.toggle("off", !on);
+
+    const badges = h("div", {},
+      !on && h("span", { class: "badge off", text: "disabled" }),
+      trig && h("span", { class: "badge trig", text: "over threshold" }),
+      on && !trig && h("span", { class: "badge", text: "below threshold" }),
+      h("span", { class: "badge", text: `action: ${st.action}` }));
+
+    // bar gauge with threshold marker; confidence shown as opacity + hatching
+    const W = 200, val = clamp01(st.value), thr = clamp01(st.threshold);
+    const color = trig ? "var(--warn)" : "var(--accent)";
+    const bar = s("svg", { class: "bar", viewBox: `0 0 ${W} 30`, role: "img",
+      "aria-label": `${st.id} ${f2(val)} of 1, threshold ${f2(thr)}, confidence ${f2(conf)}${trig ? ", over threshold" : ""}` },
+      s("defs", {}, s("pattern", { id: this.pat, width: 6, height: 6, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" },
+        s("rect", { width: 6, height: 6, fill: color, "fill-opacity": 0.18 }),
+        s("rect", { width: 3, height: 6, fill: color }))),
+      s("rect", { x: 0, y: 8, width: W, height: 14, rx: 3, fill: "var(--track)" }),
+      on && s("rect", { x: 0, y: 8, width: val * W, height: 14, rx: 3, fill: low ? `url(#${this.pat})` : color, "fill-opacity": 0.35 + 0.65 * conf }),
+      s("line", { x1: thr * W, x2: thr * W, y1: 3, y2: 27, stroke: "var(--fg)", "stroke-width": 2 }),
+      s("path", { d: `M${thr * W - 4} 0 L${thr * W + 4} 0 L${thr * W} 5 Z`, fill: "var(--fg)" }));
+
+    // sparkline from history
+    const pts = (history || []).filter((r) => r.values && r.values[st.id]).map((r) => r.values[st.id]);
+    let spark;
+    if (pts.length >= 2) {
+      const H = 34, n = pts.length;
+      const xy = pts.map((p, i) => `${((i / (n - 1)) * W).toFixed(1)},${(H - clamp01(p.v) * H).toFixed(1)}`).join(" ");
+      spark = s("svg", { class: "spark", viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: "none", role: "img",
+        "aria-label": `history of ${n} readings, from ${f2(pts[0].v)} to ${f2(pts[n - 1].v)}` },
+        s("line", { x1: 0, x2: W, y1: H - thr * H, y2: H - thr * H, stroke: "var(--muted)", "stroke-dasharray": "3 3", "stroke-width": 1, "vector-effect": "non-scaling-stroke" }),
+        s("polyline", { points: xy, fill: "none", stroke: color, "stroke-width": 2, "vector-effect": "non-scaling-stroke",
+          "stroke-dasharray": pts[n - 1].c < LOW_CONF ? "4 3" : null }));
+    }
+
+    this.view.replaceChildren(
+      h("div", { class: "head" },
+        h("h3", {}, st.id, " ", h("span", { class: "muted small", text: `(${st.human || st.id})` })),
+        h("span", { class: "muted small", text: on ? `updated ${relTime(st.ts, now)}` : "" })),
+      h("div", { class: "val" },
+        h("span", { class: "num", text: on ? f2(val) : "–" }),
+        h("span", { text: st.label || "" })),
+      badges,
+      bar,
+      h("div", { class: "small" },
+        on ? h("span", {}, `confidence ${f2(conf)} · `, h("span", { class: low ? "badge low" : "", text: low ? "low, treat as a guess" : "measured" })) : h("span", { class: "muted", text: "disabled: no reading" }),
+        h("span", { class: "muted", text: ` · threshold ${f2(thr)}` }),
+        cfg ? h("span", { class: "muted", text: ` · gain ${fmtNum(cfg.gain)} · window ${dur(cfg.window)}` }) : null),
+      spark || h("p", { class: "muted small", text: "No history yet." }),
+      spark ? h("p", { class: "muted small", style: "margin:0", text: `last ${pts.length} readings · dashed line = threshold` }) : null);
+
+    // agent marker (PRD-FEAT-006.6)
+    if (lastChange && lastChange.actor === "agent") {
+      this.marker.replaceChildren(h("div", { class: "agentmark", role: "note" },
+        h("b", { text: "Adjusted by agent" }), ` · ${relTime(lastChange.ts, now)} · ${fromTo(lastChange)} · `,
+        h("span", { text: `reason: ${lastChange.reason}` })));
+    } else this.marker.replaceChildren();
+
+    if (!this.panel.dirty) this.fillForm();
+  }
+}
+customElements.define("sense-gauge", SenseGauge);
+
+// ---------- gut ----------
+const gut = { built: false };
+function arcPoint(v, r) { const a = Math.PI * (1 - clamp01(v)); return [100 + r * Math.cos(a), 100 - r * Math.sin(a)]; }
+function arcPath(v0, v1, r) {
+  const [x0, y0] = arcPoint(v0, r), [x1, y1] = arcPoint(v1, r);
+  return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
+}
+function buildGut() {
+  gut.built = true;
+  gut.view = h("div");
+  gut.weightsBox = h("div", { class: "form" });
+  gut.weights = {};
+  const changed = () => { gut.panel.markDirty(); };
+  gut.thr = numField("threshold", "Threshold", { step: "0.01", min: 0, max: 1, onchange: changed });
+  gut.onchange = changed;
+  gut.panel = settingsPanel("Gut feeling settings (weights and threshold)",
+    [h("p", { class: "note", text: "Weight per sense (0 = ignored, missing = 1)." }), gut.weightsBox, gut.thr.row], {
+      onSave: { validate: validateGut, build: buildGutConfig },
+      onCancel: () => fillGut(),
+    });
+  gut.card = h("div", { class: "card gut" }, gut.view);
+  document.getElementById("gut").replaceChildren(gut.card, h("div", { class: "card", style: "margin-top:10px" }, gut.panel.el));
+}
+function fillGut() {
+  const g = app.state.config && app.state.config.gut;
+  if (!g) return;
+  const ids = [...new Set([...Object.keys(app.state.config.senses || {}), ...Object.keys(g.weights || {})])];
+  if (ids.join() === Object.keys(gut.weights).join()) { // same senses: update values, keep the inputs (and focus)
+    for (const id of ids) { gut.weights[id].value = String(g.weights[id] ?? 1); gut.weights[id].classList.remove("bad"); }
+  } else {
+    gut.weightsBox.replaceChildren();
+    gut.weights = {};
+  }
+  for (const id of ids) {
+    if (gut.weights[id]) continue;
+    const inp = h("input", { type: "number", step: "0.1", min: "0", id: `w${++uid}`, value: String(g.weights[id] ?? 1), oninput: gut.onchange });
+    gut.weights[id] = inp;
+    gut.weightsBox.append(h("div", { class: "field" }, h("label", { for: inp.id, text: id }), h("div", { class: "ctl" }, inp)));
+  }
+  gut.thr.num.value = g.threshold; gut.thr.rng.value = g.threshold;
+}
+function validateGut() {
+  const errs = [];
+  for (const [id, inp] of Object.entries(gut.weights)) {
+    const v = readNum(inp);
+    const bad = !Number.isFinite(v) || v < 0;
+    inp.classList.toggle("bad", bad);
+    if (bad) errs.push(`gut.weights.${id} must be a non-negative number`);
+  }
+  const t = readNum(gut.thr.num);
+  const bad = !Number.isFinite(t) || t < 0 || t > 1;
+  gut.thr.num.classList.toggle("bad", bad);
+  if (bad) errs.push("gut.threshold must be in [0, 1]");
+  return errs;
+}
+function buildGutConfig() {
+  const config = deepClone(app.state.config);
+  const weights = {};
+  for (const [id, inp] of Object.entries(gut.weights)) weights[id] = readNum(inp);
+  config.gut = { ...config.gut, weights, threshold: readNum(gut.thr.num) };
+  return config;
+}
+function renderGut(st) {
+  if (!gut.built) buildGut();
+  const g = st.snapshot.gut;
+  const v = clamp01(g.value), c = clamp01(g.confidence), thr = clamp01(st.config && st.config.gut ? st.config.gut.threshold : 0.6);
+  const low = c < LOW_CONF, trig = !!g.triggered;
+  const color = trig ? "var(--warn)" : "var(--accent)";
+  gut.card.classList.toggle("trig", trig);
+  const [tx0, ty0] = arcPoint(thr, 64), [tx1, ty1] = arcPoint(thr, 98);
+  const arc = s("svg", { class: "arc", viewBox: "0 0 200 112", role: "img",
+    "aria-label": `gut feeling ${f2(v)} of 1, threshold ${f2(thr)}, confidence ${f2(c)}${trig ? ", over threshold" : ""}` },
+    s("defs", {}, s("pattern", { id: "gutHatch", width: 7, height: 7, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" },
+      s("rect", { width: 7, height: 7, fill: color, "fill-opacity": 0.18 }), s("rect", { width: 3.5, height: 7, fill: color }))),
+    s("path", { d: arcPath(0, 1, 80), fill: "none", stroke: "var(--track)", "stroke-width": 22 }),
+    v > 0 && s("path", { d: arcPath(0, v, 80), fill: "none", stroke: low ? "url(#gutHatch)" : color, "stroke-width": 22, "stroke-opacity": 0.35 + 0.65 * c }),
+    s("line", { x1: tx0, y1: ty0, x2: tx1, y2: ty1, stroke: "var(--fg)", "stroke-width": 3 }),
+    s("text", { x: 20, y: 110, "text-anchor": "middle", "font-size": 9, fill: "var(--muted)" }, "0"),
+    s("text", { x: 180, y: 110, "text-anchor": "middle", "font-size": 9, fill: "var(--muted)" }, "1"),
+    s("text", { x: 100, y: 96, "text-anchor": "middle", "font-size": 30, fill: "var(--fg)" }, f2(v)));
+  const from = Array.isArray(g.from) && g.from.length ? g.from.join(", ") : "no sense has data yet";
+  const hist = (st.history || []).filter((r) => r.values && r.values.gut).map((r) => r.values.gut);
+  let spark = null;
+  if (hist.length >= 2) {
+    const W = 200, H = 34, n = hist.length;
+    spark = s("svg", { class: "spark", viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: "none", role: "img",
+      "aria-label": `gut history of ${n} readings, from ${f2(hist[0].v)} to ${f2(hist[n - 1].v)}` },
+      s("line", { x1: 0, x2: W, y1: H - thr * H, y2: H - thr * H, stroke: "var(--muted)", "stroke-dasharray": "3 3", "vector-effect": "non-scaling-stroke" }),
+      s("polyline", { fill: "none", stroke: color, "stroke-width": 2, "vector-effect": "non-scaling-stroke",
+        points: hist.map((p, i) => `${((i / (n - 1)) * W).toFixed(1)},${(H - clamp01(p.v) * H).toFixed(1)}`).join(" ") }));
+  }
+  gut.view.replaceChildren(arc, h("div", {},
+    h("div", { class: "big", text: f2(v) }),
+    h("p", { class: "lbl", text: g.label || "" }),
+    h("div", {},
+      trig ? h("span", { class: "badge trig", text: "over threshold" }) : h("span", { class: "badge", text: "below threshold" }),
+      g.uncertain || low ? h("span", { class: "badge low", text: "low confidence" }) : null),
+    h("p", { class: "small", style: "margin:.3rem 0" }, `confidence ${f2(c)}${low ? " (a guess, not a measurement)" : ""} · threshold ${f2(thr)}`),
+    h("p", { class: "small muted", style: "margin:0" }, `Based on: ${from}`),
+    spark, spark && h("p", { class: "muted small", style: "margin:0", text: `last ${hist.length} readings · dashed line = threshold` })));
+  if (!gut.panel.dirty) fillGut();
+}
+
+// ---------- categories + senses ----------
+const cats = { built: false, grids: {}, empties: {}, gauges: new Map() };
+function buildCats() {
+  cats.built = true;
+  const root = document.getElementById("cats");
+  for (const [key, title] of CATS) {
+    const hid = `cat-${key}`;
+    cats.grids[key] = h("div", { class: "grid" });
+    cats.empties[key] = h("p", { class: "empty", text: "No senses yet (phase 3)." });
+    root.append(h("section", { "aria-labelledby": hid }, h("h2", { id: hid, text: title }), cats.grids[key], cats.empties[key]));
+  }
+}
+function renderSenses(st) {
+  if (!cats.built) buildCats();
+  const audit = st.audit || [];
+  const lastChange = {};
+  for (const e of audit) if (e.type === "config_change") lastChange[e.sense] = e; // newest last
+  const seen = new Set();
+  const counts = Object.fromEntries(CATS.map(([k]) => [k, 0]));
+  for (const sense of st.snapshot.senses || []) {
+    const cat = cats.grids[sense.category] ? sense.category : "classic";
+    counts[cat]++;
+    seen.add(sense.id);
+    let el = cats.gauges.get(sense.id);
+    if (!el) { el = document.createElement("sense-gauge"); cats.gauges.set(sense.id, el); }
+    if (el.parentNode !== cats.grids[cat]) cats.grids[cat].append(el); // never re-append: keeps focus
+    el.data = { state: sense, cfg: st.config && st.config.senses ? st.config.senses[sense.id] : null,
+      history: st.history, lastChange: lastChange[sense.id], now: st.now };
+  }
+  for (const [id, el] of cats.gauges) if (!seen.has(id)) { el.remove(); cats.gauges.delete(id); }
+  for (const [k] of CATS) cats.empties[k].hidden = counts[k] > 0;
+}
+
+// ---------- banners + audit table ----------
+function renderBanners(st) {
+  const box = document.getElementById("banners");
+  const items = [];
+  if (!TOKEN) items.push(h("div", { class: "banner", role: "alert", text: "No token in the URL. Open the dashboard with the link printed by the server (…/?token=…)." }));
+  if (Array.isArray(st && st.configError) && st.configError.length) {
+    items.push(h("div", { class: "banner", role: "alert" },
+      h("b", { text: "senses.json is invalid, using last valid config:" }),
+      h("ul", {}, st.configError.map((e) => h("li", { text: String(e) })))));
+  }
+  box.replaceChildren(...items);
+}
+function renderAudit(st) {
+  const rows = [...(st.audit || [])].reverse();
+  const box = document.getElementById("changes");
+  if (!rows.length) { box.replaceChildren(h("p", { class: "muted", text: "No changes recorded yet." })); return; }
+  const typeText = { config_change: "setting changed", action: "action triggered", threshold_crossed: "threshold crossed" };
+  box.replaceChildren(h("table", {},
+    h("caption", { class: "sr", text: "Recent changes and actions, newest first" }),
+    h("thead", {}, h("tr", {}, ["Time", "Who", "What", "Sense", "From → to", "Reason"].map((t) => h("th", { scope: "col", text: t })))),
+    h("tbody", {}, rows.map((e) => h("tr", { class: e.actor === "agent" ? "agent" : "" },
+      h("td", { title: new Date(e.ts).toLocaleString() }, clock(e.ts), h("br"), h("span", { class: "muted small", text: relTime(e.ts, st.now) })),
+      h("td", { class: "who" }, e.actor === "agent" ? h("b", { text: "agent (AI)" }) : String(e.actor)),
+      h("td", { text: typeText[e.type] || String(e.type) }),
+      h("td", { text: String(e.sense) }),
+      h("td", { text: fromTo(e) }),
+      h("td", { text: String(e.reason ?? "") }))))));
+}
+
+function render(st) {
+  if (!st || !st.snapshot) return;
+  app.state = st;
+  app.lastUpdate = Date.now();
+  renderBanners(st);
+  renderGut(st);
+  renderSenses(st);
+  renderAudit(st);
+  document.getElementById("updated").textContent = `updated ${clock(app.lastUpdate)}`;
+}
+
+// ---------- transport: SSE with polling fallback ----------
+const conn = { es: null, poll: null, retry: null, mode: "offline" };
+function setConn(mode, text) {
+  conn.mode = mode;
+  document.getElementById("conn").dataset.s = mode;
+  document.getElementById("conntext").textContent = text;
+}
+async function refresh() {
+  try {
+    const res = await fetch(api("/api/state"), { cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    render(await res.json());
+    if (conn.mode !== "live") setConn("polling", "polling every 2 s");
+  } catch (err) {
+    if (conn.mode !== "live") setConn("offline", `offline (${err.message}), retrying`);
+  }
+}
+function startPolling() {
+  if (conn.poll) return;
+  refresh();
+  conn.poll = setInterval(refresh, 2000);
+}
+function stopPolling() { clearInterval(conn.poll); conn.poll = null; }
+function connectSSE() {
+  clearTimeout(conn.retry);
+  if (!("EventSource" in window)) { startPolling(); return; }
+  try { conn.es = new EventSource(api("/api/events")); } catch { startPolling(); return; }
+  conn.es.onopen = () => { stopPolling(); setConn("live", "live (SSE)"); };
+  conn.es.onmessage = (ev) => {
+    try { render(JSON.parse(ev.data)); if (conn.mode !== "live") { stopPolling(); setConn("live", "live (SSE)"); } }
+    catch { /* ignore malformed frame */ }
+  };
+  conn.es.onerror = () => {
+    conn.es.close(); conn.es = null;
+    setConn("polling", "SSE lost, polling every 2 s");
+    startPolling();
+    conn.retry = setTimeout(connectSSE, 15000);
+  };
+}
+
+// ---------- theme ----------
+function applyTheme(t) {
+  document.documentElement.dataset.theme = t;
+  const b = document.getElementById("theme");
+  b.textContent = t === "dark" ? "Light mode" : "Dark mode";
+  b.setAttribute("aria-pressed", String(t === "dark"));
+}
+let theme = "light";
+try { theme = localStorage.getItem("nas-theme") === "dark" ? "dark" : "light"; } catch { /* storage blocked */ }
+applyTheme(theme);
+document.getElementById("theme").addEventListener("click", () => {
+  theme = theme === "dark" ? "light" : "dark";
+  applyTheme(theme);
+  try { localStorage.setItem("nas-theme", theme); } catch { /* storage blocked */ }
+});
+
+document.getElementById("export").href = api("/api/audit/export");
+renderBanners(null);
+refresh();
+connectSSE();
+</script>
+</body>
+</html>
