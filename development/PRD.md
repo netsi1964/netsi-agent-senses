@@ -1,7 +1,7 @@
 # PRD: Sanse-lag til AI-harnesses
 
 **Projekt:** netsi-agent-senses (menneskelignende sanser til AI-agenter)
-**Version:** 0.2 (udkast) · **Sidst opdateret:** 2026-10-19
+**Version:** 0.3 (udkast) · **Sidst opdateret:** 2026-10-20
 **Ejer:** Sten Hougaard (netsi1964) · **Licens:** Apache-2.0 (som netsi-plugins)
 
 ---
@@ -55,6 +55,7 @@ Alle harness-events normaliseres til ét format, så sensorer aldrig kender harn
 
 ```ts
 type HarnessEvent = {
+  schemaVersion: 1;                 // se PRD-FEAT-001.3
   ts: number;                       // ms siden epoch
   session: string;
   kind: "prompt" | "tool_call" | "tool_result" | "token_usage" | "turn_end";
@@ -62,6 +63,7 @@ type HarnessEvent = {
   ok?: boolean;                     // kun tool_result
   exitCode?: number;
   tokens?: { used: number; limit?: number };
+  signals?: number;                 // antal lint-/check-fund i et tool_result (til smell)
   source: "claude-code" | "codex";
 };
 ```
@@ -78,8 +80,8 @@ Hver sans implementerer samme interface og regnes over et glidende vindue.
 |---|---|---|---|
 | `pain` | Smertesans | Andel fejlede tool_results i vinduet; vægt på på hinanden følgende fejl | tool_result, exitCode |
 | `interoception` | Indre fornemmelse | Brugt kontekst / grænse | token_usage |
-| `time` | Tidsfornemmelse | Tid siden sidste brugerbesked og sessionens længde, normaliseret mod tærskler | prompt, ts |
-| `smell` | Lugtesans | Antal lint-/anomali-signaler pr. tool_result (kun hvor lint kører) | tool_result |
+| `time` | Tidsfornemmelse | Tid siden sidste brugerbesked og sessionens længde, normaliseret mod `window` (sessionslængde, der tæller som lang; en sjettedel af den uden brugerbesked tæller også som lang) | prompt, ts |
+| `smell` | Lugtesans | Antal lint-/anomali-signaler (`signals`) i seneste kørsel pr. tool (kun hvor lint kører) | tool_result |
 
 **Acceptance criteria**
 - PRD-FEAT-002.1 Hver reading indeholder `value` (0..1), `label`, `confidence` (0..1) og `ts`.
@@ -144,7 +146,7 @@ Pakker det tekniske i ét hug.
 - PRD-FEAT-007.1 **Hooks:** `PostToolUse`, `UserPromptSubmit`, `Stop` (og `PreToolUse` til blokering) skriver events til kernen.
 - PRD-FEAT-007.2 **MCP-server** registreres automatisk (PRD-FEAT-005).
 - PRD-FEAT-007.3 **Slash-kommando** `/senses` viser status og åbner dashboardet.
-- PRD-FEAT-007.4 **Statuslinje** viser kompakt status, fx `pain 0.8 · ctx 0.9 · tid 0.2`.
+- PRD-FEAT-007.4 **Statuslinje** viser kompakt status, fx `pain 0.8 · ctx 0.9 · tid 0.2`. Plugins kan ikke selv registrere en statuslinje, så brugeren peger `statusLine` i sine settings på plugin'ets script (dokumenteret i README). Statuslinjens input giver også kontekstvinduets præcise størrelse.
 - PRD-FEAT-007.5 **Skill** med adfærdsregler (hvad agenten gør, når en sans slår til), redigerbar som markdown.
 
 ### PRD-FEAT-008 Indgrebsmodel
@@ -318,7 +320,7 @@ flowchart LR
 
 1. ~~Licens~~ Besluttet i 0.2: Apache-2.0.
 2. ~~Projektnavn~~ Besluttet i 0.2: `netsi-agent-senses`.
-3. Hvor præcist kan kontekstfylde læses i Claude Code (statuslinje-input, transcript)? Skal verificeres mod aktuel version.
+3. ~~Kontekstfylde i Claude Code~~ Afklaret i 0.3: transcriptets `message.usage` (input + cache read + cache creation) giver brugt kontekst; statuslinjens `context_window.context_window_size` giver grænsen. Uden statuslinje antages 200k med lav confidence.
 4. Hvilke indstillinger må `influence` ændre i V1 (hvidlisten)?
 5. Skal dashboardet kunne vise flere sessioner samtidig?
 6. Skal der være en "dry run"-tilstand, hvor sanser kun logger uden at gribe ind?
@@ -328,3 +330,4 @@ flowchart LR
 
 - 0.1 (2026-10-19): Første udkast ud fra dialog: målgruppe open source, begge formål ligeligt, V1 med fire sanser + mavefornemmelse, alle indgrebsgrader plus påvirkning, min/max-sikkerhed, Claude Code-plugin i V1 og Codex i fase 2.
 - 0.2 (2026-10-19): Projektnavn besluttet (`netsi-agent-senses`) og licens besluttet (Apache-2.0). Åbne spørgsmål 1 og 2 lukket. PRD flyttet til `development/PRD.md`.
+- 0.3 (2026-10-20): Afklaret under implementering af fase 0-1: `schemaVersion` og `signals` tilføjet til eventformatet (smell kræver et antal fund, som det oprindelige format ikke havde). `time`-beregningen præciseret. Statuslinjen kan ikke leveres af plugin'et selv (PRD-FEAT-007.4). Åbent spørgsmål 3 lukket.

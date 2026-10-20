@@ -1,0 +1,9 @@
+#!/bin/sh
+# Status line for Claude Code (PRD-FEAT-007.4). Point settings.json statusLine here.
+command -v deno >/dev/null 2>&1 || { echo "senses: deno missing"; exit 0; }
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+DATA="${NETSI_SENSES_DIR:-${CLAUDE_PROJECT_DIR:-$PWD}/.netsi-agent-senses}"
+exec deno run -q --no-lock \
+  --allow-env=CLAUDE_PROJECT_DIR,NETSI_SENSES_DIR \
+  --allow-read="$DATA" --allow-write="$DATA" \
+  "$ROOT/src/adapters/claude-code/statusline.ts"

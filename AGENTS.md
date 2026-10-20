@@ -8,7 +8,7 @@ A sense layer for AI agent harnesses. Human-like senses (pain, interoception, ti
 are implemented as sensors over a common event format. Both the agent (via MCP) and the human (via a
 dashboard) can read and tune them. V1 ships as a Claude Code plugin; Codex comes in phase 2.
 
-**Status:** pre-alpha. The PRD exists, the code does not yet.
+**Status:** alpha. Phase 1 is built except PRD-FEAT-008 (interventions); see `memory.md`.
 
 ## Source of truth
 
@@ -26,7 +26,7 @@ dashboard) can read and tune them. V1 ships as a Claude Code plugin; Codex comes
 - Storage: JSONL (events, audit) and JSON (config). No database.
 - No runtime dependencies unless clearly justified in the PR.
 
-## Planned layout
+## Layout
 
 | Path | Purpose |
 |---|---|
@@ -34,11 +34,15 @@ dashboard) can read and tune them. V1 ships as a Claude Code plugin; Codex comes
 | `src/core/` | Event format, sensors, aggregator, config, audit log |
 | `src/adapters/` | One folder per harness (`claude-code`, later `codex`). Only place that knows a harness |
 | `src/mcp/` | MCP server (`senses_read`, `senses_set`, `senses_history`) |
+| `src/http/` | Local dashboard server (127.0.0.1, token, SSE) |
+| `bin/` | Status line and dashboard launcher scripts (on the plugin's PATH) |
+| `tests/` | Tests and recorded fixtures (`tests/fixtures/`) |
 | `dashboard/` | Single-file HTML dashboard |
 | `hooks/` | Claude Code hooks (`hooks.json` + scripts) |
 | `skills/` | Skill with behaviour rules for the agent |
 | `commands/` | Slash command `/senses` |
 | `docs/` | User and contributor documentation |
+| `site/` | Feature tour slides (single HTML), published to GitHub Pages |
 | `.claude-plugin/` | Plugin manifest |
 
 ## Commands

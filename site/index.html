@@ -1,0 +1,1242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>netsi-agent-senses: senses for AI agents</title>
+<meta name="description" content="Human-like senses for AI coding agents: pain, interoception, time, smell and gut feeling. A Claude Code plugin, readable by the agent and tunable by you.">
+<meta property="og:title" content="netsi-agent-senses">
+<meta property="og:description" content="Pain, interoception, time, smell and gut feeling for AI coding agents. Claude Code plugin.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23d9480f'/%3E%3Cpath d='M7 17c3-6 6 6 9 0s6 6 9 0' stroke='white' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root {
+  --bg: #f7f4ef;
+  --surface: #ffffff;
+  --surface-2: #f1ece4;
+  --ink: #1d1a16;
+  --muted: #6b6258;
+  --line: #e3dbcf;
+  --accent: #d9480f;
+  --accent-ink: #ffffff;
+  --accent-soft: #fde7dc;
+  --teal: #0b7285;
+  --teal-soft: #dff3f6;
+  --violet: #6741d9;
+  --violet-soft: #ece6fd;
+  --ok: #2b8a3e;
+  --warn-soft: #fff3bf;
+  --code-bg: #1f1d1a;
+  --code-ink: #f3efe8;
+  --code-dim: #a39b8f;
+  --code-key: #ffb27a;
+  --code-str: #9be3b3;
+  --code-num: #9cc8ff;
+  --shadow: 0 1px 2px rgba(29, 26, 22, .06), 0 8px 28px rgba(29, 26, 22, .08);
+  --radius: 16px;
+  --font: Avenir, Montserrat, Corbel, 'URW Gothic', source-sans-pro, sans-serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14130f; --surface: #1d1b17; --surface-2: #26231e; --ink: #f2ede5; --muted: #a89f93;
+    --line: #36322b; --accent: #ff7a3d; --accent-ink: #1d1a16; --accent-soft: #3a2418;
+    --teal: #4fc3d4; --teal-soft: #142c31; --violet: #a891ff; --violet-soft: #251e3d;
+    --ok: #69db7c; --warn-soft: #3a3214; --code-bg: #0e0d0b;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 28px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14130f; --surface: #1d1b17; --surface-2: #26231e; --ink: #f2ede5; --muted: #a89f93;
+  --line: #36322b; --accent: #ff7a3d; --accent-ink: #1d1a16; --accent-soft: #3a2418;
+  --teal: #4fc3d4; --teal-soft: #142c31; --violet: #a891ff; --violet-soft: #251e3d;
+  --ok: #69db7c; --warn-soft: #3a3214; --code-bg: #0e0d0b;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 28px rgba(0,0,0,.35);
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--font); font-weight: normal; line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--teal); text-underline-offset: 3px; }
+a:hover { color: var(--accent); }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+h1, h2, h3 { font-weight: normal; line-height: 1.15; margin: 0; letter-spacing: -.01em; }
+p { margin: 0 0 .8em; }
+code { font-family: var(--mono); font-size: .88em; background: var(--surface-2); padding: .1em .35em; border-radius: 5px; }
+
+/* ---------- top bar ---------- */
+.bar {
+  position: fixed; inset: 0 0 auto 0; z-index: 10; height: 60px;
+  display: flex; align-items: center; gap: 12px; padding: 0 20px;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(12px); border-bottom: 1px solid var(--line);
+}
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); white-space: nowrap; }
+.brand svg { flex: none; }
+.brand b { font-weight: normal; letter-spacing: .01em; }
+.bar .spacer { flex: 1; }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  border-radius: 999px; font: inherit; font-size: .92rem; cursor: pointer; text-decoration: none;
+}
+.btn:hover { border-color: var(--accent); color: var(--ink); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.icon { width: 38px; padding: 0; justify-content: center; }
+.hide-sm { }
+@media (max-width: 640px) { .hide-sm { display: none !important; } .bar { padding: 0 12px; gap: 8px; } }
+
+/* ---------- table of contents ---------- */
+.toc {
+  position: fixed; top: 60px; right: 12px; z-index: 20; width: min(340px, calc(100vw - 24px));
+  max-height: calc(100vh - 140px); overflow: auto; padding: 10px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
+}
+.toc[hidden] { display: none; }
+.toc ol { list-style: none; margin: 0; padding: 0; counter-reset: toc; }
+.toc li { counter-increment: toc; }
+.toc a {
+  display: flex; gap: 10px; padding: 8px 10px; border-radius: 10px; color: var(--ink); text-decoration: none;
+}
+.toc a::before { content: counter(toc, decimal-leading-zero); color: var(--muted); font-family: var(--mono); font-size: .8rem; padding-top: .15em; }
+.toc a:hover, .toc a[aria-current="true"] { background: var(--accent-soft); }
+
+/* ---------- slides ---------- */
+.deck { position: relative; min-height: 100%; padding: 84px 20px 96px; }
+.slide {
+  max-width: 1120px; margin: 0 auto; display: none;
+  animation: in .35s ease both;
+}
+.slide.active { display: block; }
+@keyframes in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .slide { animation: none; } }
+.no-js .slide { display: block; margin-bottom: 64px; }
+
+.kicker {
+  display: inline-flex; align-items: center; gap: 8px; font-size: .78rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 14px;
+}
+.kicker .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.slide h2 { font-size: clamp(1.9rem, 4.2vw, 3rem); margin-bottom: 14px; }
+.lead { font-size: clamp(1.05rem, 1.7vw, 1.28rem); color: var(--muted); max-width: 62ch; }
+.grid { display: grid; gap: 20px; grid-template-columns: 1fr 1fr; margin-top: 28px; align-items: start; }
+.grid.three { grid-template-columns: repeat(3, 1fr); }
+.grid.wide-left { grid-template-columns: 5fr 6fr; }
+@media (max-width: 900px) { .grid, .grid.three, .grid.wide-left { grid-template-columns: 1fr; } }
+.card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 22px; box-shadow: var(--shadow); min-width: 0;
+}
+.card h3 { font-size: 1.15rem; margin-bottom: 10px; }
+.card p:last-child, .card ul:last-child { margin-bottom: 0; }
+.card ul { margin: 0 0 .8em; padding-left: 1.2em; }
+.card li { margin: .25em 0; }
+.when { border-left: 4px solid var(--teal); }
+.when h3::before { content: "When to use it · "; color: var(--teal); }
+.label { font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; display: block; }
+
+/* code */
+.code {
+  position: relative; background: var(--code-bg); color: var(--code-ink); border-radius: 12px;
+  font-family: var(--mono); font-size: .84rem; line-height: 1.6; margin: 0 0 14px; overflow: hidden;
+}
+.code:last-child { margin-bottom: 0; }
+.code .head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.08); color: var(--code-dim); font-size: .75rem; letter-spacing: .05em;
+}
+.code pre { margin: 0; padding: 14px 16px; overflow: auto; max-height: 360px; white-space: pre; }
+.code .copy {
+  background: transparent; color: var(--code-dim); border: 1px solid rgba(255,255,255,.15); border-radius: 6px;
+  font: inherit; font-size: .72rem; padding: 2px 8px; cursor: pointer;
+}
+.code .copy:hover { color: var(--code-ink); border-color: var(--code-ink); }
+.k { color: var(--code-key); } .s { color: var(--code-str); } .n { color: var(--code-num); } .c { color: var(--code-dim); }
+.prompt { color: var(--code-dim); user-select: none; }
+
+/* tabs */
+.tabs [role="tablist"] { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+.tabs [role="tab"] {
+  font: inherit; font-size: .9rem; padding: 6px 14px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface-2); color: var(--muted);
+}
+.tabs [role="tab"][aria-selected="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.tabs [role="tabpanel"][hidden] { display: none; }
+
+/* tables */
+table { width: 100%; border-collapse: collapse; font-size: .93rem; }
+th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: normal; color: var(--muted); font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; }
+tr:last-child td { border-bottom: 0; }
+.table-wrap { overflow-x: auto; }
+
+/* title slide */
+.hero { display: grid; grid-template-columns: 1.1fr .9fr; gap: 40px; align-items: center; min-height: calc(100vh - 200px); }
+@media (max-width: 900px) { .hero { grid-template-columns: 1fr; min-height: 0; } }
+.hero h1 { font-size: clamp(2.4rem, 6vw, 4.4rem); margin-bottom: 18px; }
+.hero h1 em { font-style: normal; color: var(--accent); }
+.hero .ctas { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 24px; }
+.pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .78rem; border: 1px solid var(--line); color: var(--muted); }
+.pill.alpha { border-color: var(--accent); color: var(--accent); }
+.senses-ring { width: 100%; max-width: 440px; justify-self: center; }
+
+/* sense chips */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-size: .9rem; }
+.chip i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+/* mock gauges */
+.gauge { border: 2px solid var(--line); border-radius: 14px; padding: 16px; background: var(--surface); }
+.gauge.hot { border-color: var(--accent); }
+.gauge .top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.gauge .val { font-size: 2rem; }
+.gauge .lab { color: var(--muted); }
+.badges { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0 12px; }
+.badge { font-size: .74rem; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.badge.hot { border-color: var(--accent); color: var(--accent); }
+.badge.guess { background: var(--warn-soft); border-color: transparent; color: var(--ink); }
+.badge.agent { background: var(--violet-soft); color: var(--violet); border-color: transparent; }
+.track { position: relative; height: 22px; border-radius: 8px; background: var(--surface-2); overflow: visible; }
+.fill { position: absolute; inset: 0 auto 0 0; border-radius: 8px; background: var(--accent); }
+.fill.hatched { background: repeating-linear-gradient(135deg, var(--accent) 0 8px, color-mix(in srgb, var(--accent) 45%, transparent) 8px 16px); opacity: .7; }
+.tick { position: absolute; top: -6px; bottom: -6px; width: 3px; background: var(--ink); border-radius: 2px; }
+.small { font-size: .85rem; color: var(--muted); }
+.agent-note { margin-top: 12px; padding: 8px 12px; border-left: 3px solid var(--violet); background: var(--violet-soft); border-radius: 0 8px 8px 0; font-size: .87rem; }
+
+/* flow diagram */
+.flow { width: 100%; height: auto; }
+.flow .box { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+.flow .box.hl { stroke: var(--accent); }
+.flow text { fill: var(--ink); font-family: var(--font); font-size: 14px; }
+.flow .sub { fill: var(--muted); font-size: 11.5px; }
+.flow .arrow { stroke: var(--muted); stroke-width: 1.6; fill: none; marker-end: url(#arrowhead); }
+.flow #arrowhead path { fill: var(--muted); }
+
+/* steps */
+.steps { counter-reset: step; list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
+.steps > li { counter-increment: step; display: grid; grid-template-columns: 38px 1fr; gap: 14px; align-items: start; }
+.steps > li::before {
+  content: counter(step); width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--accent-soft); color: var(--accent); font-size: 1rem;
+}
+.steps h3 { font-size: 1.05rem; margin: 6px 0 8px; }
+
+/* coffee */
+.coffee {
+  text-align: center; padding: 34px 22px; background: linear-gradient(160deg, var(--accent-soft), var(--surface));
+}
+.coffee img { display: inline-block; height: 52px; width: auto; }
+.coffee .quip { font-size: 1.1rem; max-width: 46ch; margin: 10px auto 22px; color: var(--muted); min-height: 3.2em; }
+
+/* bottom nav */
+.nav {
+  position: fixed; inset: auto 0 0 0; z-index: 10; height: 64px; display: flex; align-items: center; gap: 14px; padding: 0 20px;
+  background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(12px); border-top: 1px solid var(--line);
+}
+.progress { flex: 1; height: 4px; background: var(--line); border-radius: 4px; overflow: hidden; }
+.progress span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s ease; }
+.count { font-family: var(--mono); font-size: .85rem; color: var(--muted); min-width: 5.5em; text-align: center; }
+.hint { font-size: .8rem; color: var(--muted); }
+.no-js .nav, .no-js .toc-btn { display: none; }
+
+footer.note { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 30px; }
+</style>
+</head>
+<body class="no-js">
+<header class="bar">
+  <a class="brand" href="#/1" aria-label="netsi-agent-senses, first slide">
+    <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="var(--accent)"/><path d="M7 17c3-6 6 6 9 0s6 6 9 0" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>
+    <b>netsi-agent-senses</b>
+  </a>
+  <span class="spacer"></span>
+  <a class="btn hide-sm" href="https://github.com/netsi1964/netsi-agent-senses">GitHub</a>
+  <a class="btn hide-sm" href="#/coffee">☕ Coffee</a>
+  <button class="btn toc-btn" id="tocBtn" aria-expanded="false" aria-controls="toc">Slides</button>
+  <button class="btn icon" id="themeBtn" aria-label="Toggle dark mode" aria-pressed="false">◐</button>
+</header>
+
+<nav class="toc" id="toc" hidden aria-label="All slides"><ol id="tocList"></ol></nav>
+
+<main class="deck" id="deck">
+
+<!-- 1 · Title -->
+<section class="slide" data-title="netsi-agent-senses" id="s-title">
+  <div class="hero">
+    <div>
+      <span class="pill alpha">Alpha · Claude Code plugin · Apache-2.0</span>
+      <h1 style="margin-top:18px">Give your AI agent <em>senses</em>.</h1>
+      <p class="lead">Pain when tool calls keep failing. A feel for how full its context is. A sense of time. A nose for
+        code smells. And a gut feeling that sums it all up. Readable by the agent, tunable by you.</p>
+      <div class="chips" aria-label="The five senses">
+        <span class="chip"><i style="background:#e03131"></i>pain</span>
+        <span class="chip"><i style="background:#1c7ed6"></i>interoception</span>
+        <span class="chip"><i style="background:#f08c00"></i>time</span>
+        <span class="chip"><i style="background:#2f9e44"></i>smell</span>
+        <span class="chip"><i style="background:#7048e8"></i>gut</span>
+      </div>
+      <div class="ctas">
+        <a class="btn primary" href="#/install">Install in 5 minutes →</a>
+        <a class="btn" href="#/why">Why senses?</a>
+      </div>
+    </div>
+    <svg class="senses-ring" viewBox="0 0 400 400" role="img" aria-label="Four senses around a gut feeling: pain 0.80, context 0.84, time 0.08, smell 0.75, gut 0.71">
+      <circle cx="200" cy="200" r="150" fill="none" stroke="var(--line)" stroke-width="1.5" stroke-dasharray="4 8"/>
+      <g font-family="var(--font)" text-anchor="middle">
+        <circle cx="200" cy="200" r="74" fill="var(--violet-soft)" stroke="var(--violet)" stroke-width="2"/>
+        <text x="200" y="192" font-size="40" fill="var(--ink)">0.71</text>
+        <text x="200" y="220" font-size="14" fill="var(--violet)">gut feeling</text>
+        <g>
+          <circle cx="200" cy="50" r="44" fill="var(--surface)" stroke="#e03131" stroke-width="2.5"/>
+          <text x="200" y="52" font-size="22" fill="var(--ink)">0.80</text><text x="200" y="70" font-size="12" fill="var(--muted)">pain !</text>
+        </g>
+        <g>
+          <circle cx="350" cy="200" r="44" fill="var(--surface)" stroke="#1c7ed6" stroke-width="2.5"/>
+          <text x="350" y="202" font-size="22" fill="var(--ink)">0.84</text><text x="350" y="220" font-size="12" fill="var(--muted)">context !</text>
+        </g>
+        <g>
+          <circle cx="200" cy="350" r="44" fill="var(--surface)" stroke="#f08c00" stroke-width="2.5"/>
+          <text x="200" y="352" font-size="22" fill="var(--ink)">0.08</text><text x="200" y="370" font-size="12" fill="var(--muted)">time</text>
+        </g>
+        <g>
+          <circle cx="50" cy="200" r="44" fill="var(--surface)" stroke="#2f9e44" stroke-width="2.5"/>
+          <text x="50" y="202" font-size="22" fill="var(--ink)">0.75</text><text x="50" y="220" font-size="12" fill="var(--muted)">smell !</text>
+        </g>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<!-- 2 · Why -->
+<section class="slide" data-title="Why senses?" id="why">
+  <span class="kicker"><span class="dot"></span>Motivation</span>
+  <h2>Agents don't feel how a session is going.</h2>
+  <p class="lead">A human developer notices when things go wrong: the third failing build stings, a long afternoon
+    feels long, a messy diff smells. An AI agent has none of that. It notices a failure spiral, a nearly full
+    context or a two-hour solo run only when it is too late.</p>
+  <div class="grid three">
+    <div class="card">
+      <h3>For the agent</h3>
+      <p>A compact, structured picture of its own state that it can read over MCP and act on: change approach,
+        summarise, check in with you.</p>
+    </div>
+    <div class="card">
+      <h3>For you</h3>
+      <p>A glance at how a session is "feeling", in a status line and a live dashboard, without reading the
+        transcript.</p>
+    </div>
+    <div class="card">
+      <h3>For both, equally</h3>
+      <p>One shared picture and one shared configuration. The agent may tune its senses, but only inside bounds
+        you set, and it can never switch one off.</p>
+    </div>
+  </div>
+  <div class="card" style="margin-top:20px">
+    <span class="label">Design principles</span>
+    <div class="table-wrap"><table>
+      <tr><td>Every reading is <code>0..1</code> with a <code>confidence</code></td><td>A guess never looks like a measurement. No data means low confidence, never an invented value.</td></tr>
+      <tr><td>Metadata only</td><td>Tool name, success, exit code, token counts. Never prompts, code or tool output.</td></tr>
+      <tr><td>Deterministic and local</td><td>Pure functions over events. No cloud, no database, no learning.</td></tr>
+      <tr><td>Harness-agnostic core</td><td>Only a thin adapter knows Claude Code. Codex is next.</td></tr>
+    </table></div>
+  </div>
+</section>
+
+<!-- 3 · How it works -->
+<section class="slide" data-title="How it works" id="how">
+  <span class="kicker"><span class="dot"></span>Architecture</span>
+  <h2>Hooks in, senses out.</h2>
+  <p class="lead">Claude Code hooks report what happens. An adapter turns that into a small, versioned event. Pure
+    sensor functions read the events and your config, and the result reaches the agent over MCP and you in the
+    dashboard and status line.</p>
+  <div class="card" style="margin-top:24px">
+    <svg class="flow" viewBox="0 0 960 250" role="img" aria-label="Flow: Claude Code hooks to adapter to event log; sensors read event log and senses.json; results go to MCP server, dashboard and status line">
+      <defs><marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z"/></marker></defs>
+      <rect class="box" x="10" y="90" width="150" height="70" rx="12"/><text x="85" y="122" text-anchor="middle">Claude Code</text><text class="sub" x="85" y="142" text-anchor="middle">hooks · status line</text>
+      <rect class="box" x="200" y="90" width="140" height="70" rx="12"/><text x="270" y="122" text-anchor="middle">Adapter</text><text class="sub" x="270" y="142" text-anchor="middle">only harness code</text>
+      <rect class="box" x="380" y="40" width="160" height="60" rx="12"/><text x="460" y="67" text-anchor="middle">events.jsonl</text><text class="sub" x="460" y="86" text-anchor="middle">metadata only</text>
+      <rect class="box" x="380" y="150" width="160" height="60" rx="12"/><text x="460" y="177" text-anchor="middle">senses.json</text><text class="sub" x="460" y="196" text-anchor="middle">your config + bounds</text>
+      <rect class="box hl" x="580" y="90" width="150" height="70" rx="12"/><text x="655" y="122" text-anchor="middle">Sensors + gut</text><text class="sub" x="655" y="142" text-anchor="middle">pure functions</text>
+      <rect class="box" x="770" y="20" width="180" height="56" rx="12"/><text x="860" y="46" text-anchor="middle">MCP server</text><text class="sub" x="860" y="64" text-anchor="middle">agent reads + tunes</text>
+      <rect class="box" x="770" y="97" width="180" height="56" rx="12"/><text x="860" y="123" text-anchor="middle">Dashboard</text><text class="sub" x="860" y="141" text-anchor="middle">you watch + tune</text>
+      <rect class="box" x="770" y="174" width="180" height="56" rx="12"/><text x="860" y="200" text-anchor="middle">Status line</text><text class="sub" x="860" y="218" text-anchor="middle">always visible</text>
+      <path class="arrow" d="M160 125H198"/>
+      <path class="arrow" d="M340 115C360 100 360 75 378 72"/>
+      <path class="arrow" d="M540 72C560 75 560 105 578 112"/>
+      <path class="arrow" d="M540 180C560 177 560 145 578 138"/>
+      <path class="arrow" d="M730 115C750 90 750 55 768 50"/>
+      <path class="arrow" d="M730 125H768"/>
+      <path class="arrow" d="M730 135C750 160 750 195 768 200"/>
+    </svg>
+  </div>
+  <div class="grid three">
+    <div class="card"><span class="label">Stack</span><p>Deno + TypeScript. No runtime dependencies. No build step.</p></div>
+    <div class="card"><span class="label">Storage</span><p>JSONL for events, readings and audit; JSON for config. All in <code>.netsi-agent-senses/</code> in your project.</p></div>
+    <div class="card"><span class="label">Safety</span><p>Dashboard on <code>127.0.0.1</code> only, behind a random token. Agent changes are bounded and audited.</p></div>
+  </div>
+</section>
+
+<!-- 4 · Install -->
+<section class="slide" data-title="Install in 5 minutes" id="install">
+  <span class="kicker"><span class="dot"></span>Get started</span>
+  <h2>Install in five minutes.</h2>
+  <p class="lead">You need <a href="https://claude.com/claude-code">Claude Code</a> and <a href="https://deno.com">Deno</a> 2.x. Nothing to build.</p>
+  <div class="grid wide-left">
+    <ol class="steps">
+      <li><div><h3>Clone the plugin</h3>
+        <div class="code"><div class="head">shell<button class="copy">Copy</button></div><pre><span class="prompt">$ </span>git clone https://github.com/netsi1964/netsi-agent-senses.git ~/netsi-agent-senses</pre></div></div></li>
+      <li><div><h3>Start Claude Code with it</h3>
+        <div class="code"><div class="head">shell, in your project<button class="copy">Copy</button></div><pre><span class="prompt">$ </span>claude --plugin-dir ~/netsi-agent-senses</pre></div>
+        <p class="small">Loads the hooks, the <code>senses</code> MCP server, <code>/senses</code> and the <code>senses</code> skill.</p></div></li>
+      <li><div><h3>Ignore the data folder</h3>
+        <div class="code"><div class="head">shell<button class="copy">Copy</button></div><pre><span class="prompt">$ </span>echo ".netsi-agent-senses/" >> .gitignore</pre></div></div></li>
+      <li><div><h3>Look at your senses</h3><p>Type <code>/senses</code> in Claude Code. Optional: add the status line (see the status line slide).</p></div></li>
+    </ol>
+    <div>
+      <div class="card when">
+        <h3>who it is for</h3>
+        <ul>
+          <li>You work with Claude Code every day and want an early warning for failure spirals, a full context or a
+            session running away with time.</li>
+          <li>You run agents for long stretches and want a shared, measurable picture of how they are doing.</li>
+          <li>You are curious whether the senses metaphor changes how an agent behaves.</li>
+        </ul>
+      </div>
+      <div class="card" style="margin-top:20px">
+        <h3>Check it works</h3>
+        <p>After a few tool calls, files appear in your project:</p>
+        <div class="code"><div class="head">.netsi-agent-senses/</div><pre>events.jsonl     <span class="c"># normalised events</span>
+readings.jsonl   <span class="c"># one snapshot per event</span>
+audit.jsonl      <span class="c"># who changed what</span>
+senses.json      <span class="c"># config (created on first use)</span></pre></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 · pain -->
+<section class="slide" data-title="Sense: pain" id="pain">
+  <span class="kicker" style="color:#e03131"><span class="dot"></span>Sense 1 of 4 · bodily</span>
+  <h2>pain: it hurts when tool calls fail.</h2>
+  <p class="lead">The share of failed tool results in the last five minutes, weighted towards failures in a row. A
+    failure spiral hurts more than scattered errors.</p>
+  <div class="grid">
+    <div>
+      <div class="card">
+        <span class="label">How it is computed</span>
+        <div class="code"><div class="head">formula</div><pre>value = gain × (0.6 × failed/total
+             + 0.4 × min(streak/3, 1))
+confidence = min(results/5, 1)</pre></div>
+        <p class="small">Failures come from Claude Code's <code>PostToolUseFailure</code> hook, with the exit code
+          parsed from <code>Exit code N</code>. If you interrupt a tool yourself, that is not counted as pain.</p>
+      </div>
+      <div class="card when" style="margin-top:20px">
+        <h3>pain</h3>
+        <p>Always on. Most useful in debugging loops, where an agent tends to retry the same failing command with
+          small variations. The skill tells it to stop, read the whole error, and change approach.</p>
+      </div>
+    </div>
+    <div class="card tabs">
+      <div role="tablist" aria-label="pain example">
+        <button role="tab" aria-selected="true">Example</button><button role="tab" aria-selected="false">Output</button>
+      </div>
+      <div role="tabpanel">
+        <span class="label">Nine tool results in five minutes</span>
+        <div class="code"><div class="head">events.jsonl (simplified)</div><pre>Read  <span class="s">ok</span>
+Bash  <span class="s">ok</span>     exit 0
+Bash  <span class="k">FAIL</span>   exit 1
+Bash  <span class="k">FAIL</span>   exit 1
+Bash  <span class="k">FAIL</span>   exit 2
+Bash  <span class="s">ok</span>     exit 0
+Bash  <span class="k">FAIL</span>   exit 1
+Bash  <span class="k">FAIL</span>   exit 1
+Bash  <span class="k">FAIL</span>   exit 1   <span class="c">← 3 in a row</span></pre></div>
+      </div>
+      <div role="tabpanel" hidden>
+        <span class="label">senses_read → pain</span>
+        <div class="code"><div class="head">JSON</div><pre>{
+  <span class="k">"id"</span>: <span class="s">"pain"</span>,
+  <span class="k">"value"</span>: <span class="n">0.8</span>,
+  <span class="k">"label"</span>: <span class="s">"6 of 9 calls failed, last 3 in a row"</span>,
+  <span class="k">"confidence"</span>: <span class="n">1</span>,
+  <span class="k">"triggered"</span>: <span class="n">true</span>,
+  <span class="k">"threshold"</span>: <span class="n">0.6</span>,
+  <span class="k">"action"</span>: <span class="s">"warn"</span>
+}</pre></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 · interoception -->
+<section class="slide" data-title="Sense: interoception" id="interoception">
+  <span class="kicker" style="color:#1c7ed6"><span class="dot"></span>Sense 2 of 4 · bodily</span>
+  <h2>interoception: how full is my context?</h2>
+  <p class="lead">Context in use divided by the window size. The agent feels its context filling up before
+    auto-compaction or degraded answers surprise it.</p>
+  <div class="grid">
+    <div>
+      <div class="card">
+        <span class="label">Where the numbers come from</span>
+        <div class="table-wrap"><table>
+          <tr><th>Source</th><th>Gives</th><th>Confidence</th></tr>
+          <tr><td>Transcript, on every prompt and stop</td><td>tokens in use (input + cache read + cache creation)</td><td>0.5 when the limit is assumed (200k)</td></tr>
+          <tr><td>Status line input</td><td>tokens in use and the exact window size, e.g. 1M</td><td>1.0</td></tr>
+          <tr><td>Earlier status line event</td><td>window size, carried forward</td><td>0.9</td></tr>
+        </table></div>
+      </div>
+      <div class="card when" style="margin-top:20px">
+        <h3>interoception</h3>
+        <p>Long sessions, big refactors and anything that reads many files. When it triggers, the skill tells the
+          agent to finish the step, write a short state summary and suggest <code>/compact</code>.</p>
+      </div>
+    </div>
+    <div class="card tabs">
+      <div role="tablist" aria-label="interoception example">
+        <button role="tab" aria-selected="true">Example</button><button role="tab" aria-selected="false">Output</button>
+      </div>
+      <div role="tabpanel">
+        <span class="label">One token_usage event</span>
+        <div class="code"><div class="head">events.jsonl</div><pre>{ <span class="k">"kind"</span>: <span class="s">"token_usage"</span>,
+  <span class="k">"tokens"</span>: { <span class="k">"used"</span>: <span class="n">168000</span>, <span class="k">"limit"</span>: <span class="n">200000</span> },
+  <span class="k">"session"</span>: <span class="s">"a1b2c3"</span>, <span class="k">"source"</span>: <span class="s">"claude-code"</span> }</pre></div>
+      </div>
+      <div role="tabpanel" hidden>
+        <span class="label">senses_read → interoception</span>
+        <div class="code"><div class="head">JSON</div><pre>{
+  <span class="k">"id"</span>: <span class="s">"interoception"</span>,
+  <span class="k">"value"</span>: <span class="n">0.84</span>,
+  <span class="k">"label"</span>: <span class="s">"168k of 200k tokens"</span>,
+  <span class="k">"confidence"</span>: <span class="n">1</span>,
+  <span class="k">"triggered"</span>: <span class="n">true</span>,
+  <span class="k">"threshold"</span>: <span class="n">0.8</span>
+}</pre></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 7 · time -->
+<section class="slide" data-title="Sense: time" id="time">
+  <span class="kicker" style="color:#f08c00"><span class="dot"></span>Sense 3 of 4 · temporal</span>
+  <h2>time: has this been going on too long?</h2>
+  <p class="lead">Session length, and how long the agent has worked alone since you last wrote. The default
+    <code>window</code> of two hours counts as "long", and so do twenty minutes without hearing from you.</p>
+  <div class="grid">
+    <div>
+      <div class="card">
+        <span class="label">How it is computed</span>
+        <div class="code"><div class="head">formula</div><pre>value = gain × max(age / window,
+                   idle / (window / 6))
+confidence = 1 with a prompt, 0.3 without</pre></div>
+      </div>
+      <div class="card when" style="margin-top:20px">
+        <h3>time</h3>
+        <p>Autonomous runs and long tasks. When it triggers, the agent gives you a two-line status and asks
+          whether to continue in the current direction, instead of drifting for an hour.</p>
+      </div>
+    </div>
+    <div class="card tabs">
+      <div role="tablist" aria-label="time example">
+        <button role="tab" aria-selected="true">Example</button><button role="tab" aria-selected="false">Output</button>
+      </div>
+      <div role="tabpanel">
+        <span class="label">A prompt, then ten minutes of work</span>
+        <div class="code"><div class="head">timeline</div><pre>00:00  prompt          <span class="c">← you wrote</span>
+00:01  tool_call Read
+00:01  tool_result ok
+ ...
+10:00  now</pre></div>
+      </div>
+      <div role="tabpanel" hidden>
+        <span class="label">senses_read → time</span>
+        <div class="code"><div class="head">JSON</div><pre>{
+  <span class="k">"id"</span>: <span class="s">"time"</span>,
+  <span class="k">"value"</span>: <span class="n">0.5</span>,
+  <span class="k">"label"</span>: <span class="s">"session 10 min, 10 min since last prompt"</span>,
+  <span class="k">"confidence"</span>: <span class="n">1</span>,
+  <span class="k">"triggered"</span>: <span class="n">false</span>,
+  <span class="k">"threshold"</span>: <span class="n">0.75</span>
+}</pre></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 8 · smell -->
+<section class="slide" data-title="Sense: smell" id="smell">
+  <span class="kicker" style="color:#2f9e44"><span class="dot"></span>Sense 4 of 4 · classic</span>
+  <h2>smell: something in the code is off.</h2>
+  <p class="lead">When the agent runs a linter or type checker (<code>deno lint</code>, <code>eslint</code>,
+    <code>ruff</code>, <code>tsc</code>, <code>clippy</code> and more), the adapter counts the problem lines in
+    memory and stores only the count. Only the latest run per tool counts, so fixing the problems clears the smell.</p>
+  <div class="grid">
+    <div>
+      <div class="card">
+        <span class="label">How it is computed</span>
+        <div class="code"><div class="head">formula</div><pre>value = gain × (1 − e^(−signals / 5))
+confidence = min(measured results / 3, 1)</pre></div>
+        <p class="small">No linter runs means no confidence. Smell never guesses.</p>
+      </div>
+      <div class="card when" style="margin-top:20px">
+        <h3>smell</h3>
+        <p>Projects with linters or type checkers. When it triggers, the agent fixes the reported problems before
+          adding new code. No linters? Switch it off in the dashboard.</p>
+      </div>
+    </div>
+    <div class="card tabs">
+      <div role="tablist" aria-label="smell example">
+        <button role="tab" aria-selected="true">Example</button><button role="tab" aria-selected="false">Output</button>
+      </div>
+      <div role="tabpanel">
+        <span class="label">The agent runs deno lint</span>
+        <div class="code"><div class="head">tool output (never stored)</div><pre>error[no-unused-vars]: `x` is never used
+ --> src/a.ts:1:7
+warning[prefer-const]: use const
+ --> src/b.ts:2:5
+Found 2 problems</pre></div>
+        <div class="code"><div class="head">what is stored</div><pre>{ <span class="k">"kind"</span>: <span class="s">"tool_result"</span>, <span class="k">"tool"</span>: <span class="s">"Bash"</span>,
+  <span class="k">"ok"</span>: <span class="n">true</span>, <span class="k">"signals"</span>: <span class="n">2</span> }</pre></div>
+      </div>
+      <div role="tabpanel" hidden>
+        <span class="label">senses_read → smell</span>
+        <div class="code"><div class="head">JSON</div><pre>{
+  <span class="k">"id"</span>: <span class="s">"smell"</span>,
+  <span class="k">"value"</span>: <span class="n">0.753</span>,
+  <span class="k">"label"</span>: <span class="s">"7 lint/check signals in latest runs"</span>,
+  <span class="k">"confidence"</span>: <span class="n">0.333</span>,
+  <span class="k">"triggered"</span>: <span class="n">true</span>
+}</pre></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 9 · gut -->
+<section class="slide" data-title="Gut feeling" id="gut">
+  <span class="kicker" style="color:var(--violet)"><span class="dot"></span>Aggregator</span>
+  <h2>gut: one feeling from all senses.</h2>
+  <p class="lead">A weighted average of the enabled senses that have data. Its confidence is the weighted average of
+    all senses' confidence, so when it is mostly guessing it says so.</p>
+  <div class="grid">
+    <div>
+      <div class="card">
+        <span class="label">Default weights</span>
+        <div class="table-wrap"><table>
+          <tr><th>Sense</th><th>Weight</th></tr>
+          <tr><td>pain</td><td>1.5</td></tr><tr><td>interoception</td><td>1</td></tr>
+          <tr><td>smell</td><td>1</td></tr><tr><td>time</td><td>0.5</td></tr>
+        </table></div>
+        <p class="small" style="margin-top:10px">A value over threshold with confidence below 0.5 is flagged
+          <code>uncertain</code>, and the label ends in "(low confidence)".</p>
+      </div>
+      <div class="card when" style="margin-top:20px">
+        <h3>gut</h3>
+        <p>Your quick glance. If it is high, the agent says which sense drives it. The individual senses are always
+          shown next to it, so the aggregate never hides a single strong signal.</p>
+      </div>
+    </div>
+    <div class="card tabs">
+      <div role="tablist" aria-label="gut example">
+        <button role="tab" aria-selected="true">Output</button><button role="tab" aria-selected="false">Uncertain</button>
+      </div>
+      <div role="tabpanel">
+        <span class="label">senses_read → gut</span>
+        <div class="code"><div class="head">JSON</div><pre>{
+  <span class="k">"id"</span>: <span class="s">"gut"</span>,
+  <span class="k">"value"</span>: <span class="n">0.709</span>,
+  <span class="k">"label"</span>: <span class="s">"something is wrong, mostly pain"</span>,
+  <span class="k">"confidence"</span>: <span class="n">0.833</span>,
+  <span class="k">"triggered"</span>: <span class="n">true</span>,
+  <span class="k">"uncertain"</span>: <span class="n">false</span>,
+  <span class="k">"from"</span>: [<span class="s">"pain"</span>, <span class="s">"interoception"</span>, <span class="s">"time"</span>, <span class="s">"smell"</span>]
+}</pre></div>
+      </div>
+      <div role="tabpanel" hidden>
+        <span class="label">Only one weak sense has data</span>
+        <div class="code"><div class="head">JSON</div><pre>{
+  <span class="k">"id"</span>: <span class="s">"gut"</span>,
+  <span class="k">"value"</span>: <span class="n">1</span>,
+  <span class="k">"label"</span>: <span class="s">"something is wrong, mostly pain (low confidence)"</span>,
+  <span class="k">"confidence"</span>: <span class="n">0.1</span>,
+  <span class="k">"uncertain"</span>: <span class="n">true</span>
+}</pre></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 10 · MCP read -->
+<section class="slide" data-title="MCP: senses_read & senses_history" id="mcp">
+  <span class="kicker"><span class="dot"></span>MCP server</span>
+  <h2>The agent reads its own senses.</h2>
+  <p class="lead">A local stdio MCP server, registered automatically by the plugin. The agent calls it when it is
+    unsure how the session is going, or when the skill tells it to.</p>
+  <div class="grid">
+    <div>
+      <div class="card">
+        <span class="label">Tools</span>
+        <div class="table-wrap"><table>
+          <tr><th>Tool</th><th>Returns</th></tr>
+          <tr><td><code>senses_read</code></td><td>Every sense, the gut feeling, and each sense's tunable settings with the bounds the agent may move them within</td></tr>
+          <tr><td><code>senses_history</code></td><td>Recent readings for trends, optionally for one sense or session</td></tr>
+          <tr><td><code>senses_set</code></td><td>Tune a sense within bounds (next slide)</td></tr>
+        </table></div>
+      </div>
+      <div class="card when" style="margin-top:20px">
+        <h3>the MCP tools</h3>
+        <p>Ask the agent directly: "How are your senses?" or "Is pain trending up?". It will call the tools
+          itself. Claude Code shows them as <code>mcp__plugin_netsi-agent-senses_senses__*</code>.</p>
+      </div>
+    </div>
+    <div class="card tabs">
+      <div role="tablist" aria-label="MCP examples">
+        <button role="tab" aria-selected="true">senses_read</button><button role="tab" aria-selected="false">senses_history</button>
+      </div>
+      <div role="tabpanel">
+        <span class="label">Output (shortened)</span>
+        <div class="code"><div class="head">JSON</div><pre>{
+  <span class="k">"session"</span>: <span class="s">"a1b2c3"</span>,
+  <span class="k">"gut"</span>: { <span class="k">"value"</span>: <span class="n">0.709</span>, <span class="k">"label"</span>: <span class="s">"something is wrong, mostly pain"</span> },
+  <span class="k">"senses"</span>: [
+    {
+      <span class="k">"id"</span>: <span class="s">"pain"</span>, <span class="k">"value"</span>: <span class="n">0.8</span>, <span class="k">"confidence"</span>: <span class="n">1</span>,
+      <span class="k">"label"</span>: <span class="s">"6 of 9 calls failed, last 3 in a row"</span>,
+      <span class="k">"triggered"</span>: <span class="n">true</span>, <span class="k">"action"</span>: <span class="s">"warn"</span>,
+      <span class="k">"tunable"</span>: {
+        <span class="k">"gain"</span>: <span class="n">1</span>, <span class="k">"threshold"</span>: <span class="n">0.6</span>, <span class="k">"window"</span>: <span class="n">300</span>,
+        <span class="k">"bounds"</span>: { <span class="k">"gain"</span>: [<span class="n">0.75</span>, <span class="n">1.5</span>],
+                    <span class="k">"threshold"</span>: [<span class="n">0.4</span>, <span class="n">0.85</span>],
+                    <span class="k">"window"</span>: [<span class="n">120</span>, <span class="n">900</span>] }
+      }
+    },
+    <span class="c">… interoception, time, smell</span>
+  ]
+}</pre></div>
+      </div>
+      <div role="tabpanel" hidden>
+        <span class="label">senses_history { "sense": "pain", "limit": 1 }</span>
+        <div class="code"><div class="head">JSON</div><pre>[
+  {
+    <span class="k">"ts"</span>: <span class="n">1792450100000</span>,
+    <span class="k">"session"</span>: <span class="s">"a1b2c3"</span>,
+    <span class="k">"values"</span>: { <span class="k">"pain"</span>: { <span class="k">"v"</span>: <span class="n">0.8</span>, <span class="k">"c"</span>: <span class="n">1</span> } }
+  }
+]</pre></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 11 · senses_set + safety -->
+<section class="slide" data-title="Self-tuning & safety" id="safety">
+  <span class="kicker"><span class="dot"></span>senses_set · safety model</span>
+  <h2>The agent may tune. It may never go blind.</h2>
+  <p class="lead">Through MCP the agent can change only <code>gain</code>, <code>threshold</code> and
+    <code>window</code>, only inside the bounds you set, and only with a reason. It can never change
+    <code>enabled</code>, <code>bounds</code> or <code>action</code>, so it can never switch a sense off.</p>
+  <div class="grid">
+    <div>
+      <div class="card">
+        <span class="label">Who may change what</span>
+        <div class="table-wrap"><table>
+          <tr><th>Field</th><th>Agent</th><th>You</th></tr>
+          <tr><td><code>gain</code> · <code>threshold</code> · <code>window</code></td><td>within bounds</td><td>yes</td></tr>
+          <tr><td><code>bounds</code></td><td>no</td><td>yes</td></tr>
+          <tr><td><code>enabled</code></td><td>no</td><td>yes</td></tr>
+          <tr><td><code>action</code></td><td>no</td><td>yes</td></tr>
+        </table></div>
+        <p class="small" style="margin-top:10px">Shipped bounds are narrow on purpose. A fuzz test throws 5,000
+          random requests at the policy and checks no sense ends up blinded.</p>
+      </div>
+      <div class="card when" style="margin-top:20px">
+        <h3>senses_set</h3>
+        <p>When a sense is wrong for the task, e.g. <code>pain</code> firing on expected failures while writing
+          tests first. Not to silence a sense that is telling the truth. The skill says exactly that.</p>
+      </div>
+    </div>
+    <div class="card tabs">
+      <div role="tablist" aria-label="senses_set examples">
+        <button role="tab" aria-selected="true">Allowed</button><button role="tab" aria-selected="false">Out of bounds</button><button role="tab" aria-selected="false">Switch off</button>
+      </div>
+      <div role="tabpanel">
+        <div class="code"><div class="head">call</div><pre>senses_set {
+  <span class="k">"sense"</span>: <span class="s">"pain"</span>, <span class="k">"threshold"</span>: <span class="n">0.7</span>,
+  <span class="k">"reason"</span>: <span class="s">"Expected failures while writing tests first"</span>
+}</pre></div>
+        <div class="code"><div class="head">result</div><pre>{ <span class="k">"changed"</span>: [ { <span class="k">"field"</span>: <span class="s">"threshold"</span>, <span class="k">"from"</span>: <span class="n">0.6</span>, <span class="k">"to"</span>: <span class="n">0.7</span> } ],
+  <span class="k">"sense"</span>: <span class="s">"pain"</span> }</pre></div>
+      </div>
+      <div role="tabpanel" hidden>
+        <div class="code"><div class="head">call</div><pre>senses_set { <span class="k">"sense"</span>: <span class="s">"pain"</span>, <span class="k">"threshold"</span>: <span class="n">0.95</span>, <span class="k">"reason"</span>: <span class="s">"too noisy"</span> }</pre></div>
+        <div class="code"><div class="head">result · isError</div><pre>Rejected: pain.threshold = 0.95 is outside the
+human-set bounds [0.4, 0.85]</pre></div>
+      </div>
+      <div role="tabpanel" hidden>
+        <div class="code"><div class="head">call</div><pre>senses_set { <span class="k">"sense"</span>: <span class="s">"pain"</span>, <span class="k">"enabled"</span>: <span class="n">false</span>, <span class="k">"reason"</span>: <span class="s">"quiet please"</span> }</pre></div>
+        <div class="code"><div class="head">result · isError</div><pre>Rejected: the agent may only change gain, threshold,
+window; not allowed: enabled (only the human can
+change these)</pre></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 12 · Dashboard -->
+<section class="slide" data-title="Dashboard" id="dashboard">
+  <span class="kicker"><span class="dot"></span>For you</span>
+  <h2>A live dashboard, one file, no build.</h2>
+  <p class="lead">A gauge per sense with its value, label, confidence and history. Settings for everything,
+    including bounds and action. A clear marker when the agent adjusted something. Light mode by default, dark on a
+    click.</p>
+  <div class="grid">
+    <div class="gauge hot" aria-label="Example sense card: pain 0.80, over threshold, adjusted by agent">
+      <div class="top"><span>pain <span class="small">(bodily)</span></span><span class="small">updated just now</span></div>
+      <div><span class="val">0.80</span> <span class="lab">6 of 9 calls failed, last 3 in a row</span></div>
+      <div class="badges"><span class="badge hot">over threshold</span><span class="badge">action: warn</span></div>
+      <div class="track"><div class="fill" style="width:80%"></div><div class="tick" style="left:70%"></div></div>
+      <p class="small" style="margin:10px 0 0">confidence 1.00 · measured · threshold 0.70 · gain 1 · window 5 min</p>
+      <div class="agent-note"><b style="font-weight:normal;color:var(--violet)">Adjusted by agent</b> · 2 min ago · threshold 0.6 → 0.7 · reason: Expected failures while writing tests first</div>
+      <div style="height:18px"></div>
+      <div class="top"><span>smell <span class="small">(classic)</span></span><span class="small">updated just now</span></div>
+      <div><span class="val">0.75</span> <span class="lab">7 lint/check signals in latest runs</span></div>
+      <div class="badges"><span class="badge hot">over threshold</span><span class="badge guess">low, treat as a guess</span></div>
+      <div class="track"><div class="fill hatched" style="width:75%"></div><div class="tick" style="left:50%"></div></div>
+      <p class="small" style="margin:10px 0 0">confidence 0.33 · threshold 0.50 · hatched fill = low confidence</p>
+    </div>
+    <div>
+      <div class="card">
+        <span class="label">Open it</span>
+        <div class="code"><div class="head">in Claude Code</div><pre>/senses</pre></div>
+        <div class="code"><div class="head">or from a shell in your project<button class="copy">Copy</button></div><pre><span class="prompt">$ </span>~/netsi-agent-senses/bin/netsi-senses-dashboard
+http://127.0.0.1:52817/?token=3f9c…</pre></div>
+        <p class="small">Binds to <code>127.0.0.1</code> only. Every request needs the random token. Updates arrive
+          over Server-Sent Events within a second, with polling as a fallback.</p>
+      </div>
+      <div class="card when" style="margin-top:20px">
+        <h3>the dashboard</h3>
+        <p>Keep it open on a second screen during long sessions, use it to widen or narrow the agent's bounds, and
+          to see who changed what. Colour is never the only signal: numbers and labels are always shown.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 13 · /senses -->
+<section class="slide" data-title="The /senses command" id="command">
+  <span class="kicker"><span class="dot"></span>Slash command</span>
+  <h2><code style="font-size:.9em">/senses</code>: how am I doing?</h2>
+  <p class="lead">One command shows every sense as a table and gives you the dashboard link. It never changes a
+    setting.</p>
+  <div class="grid">
+    <div class="card">
+      <span class="label">Example reply in Claude Code</span>
+      <div class="table-wrap"><table>
+        <tr><th>Sense</th><th>Value</th><th>Confidence</th><th>Label</th></tr>
+        <tr><td>pain</td><td>0.80 · over threshold</td><td>1.00</td><td>6 of 9 calls failed, last 3 in a row</td></tr>
+        <tr><td>interoception</td><td>0.84 · over threshold</td><td>1.00</td><td>168k of 200k tokens</td></tr>
+        <tr><td>time</td><td>0.08</td><td>1.00</td><td>session 2 min, 2 min since last prompt</td></tr>
+        <tr><td>smell</td><td>0.75 · over threshold</td><td>0.33</td><td>7 lint/check signals in latest runs</td></tr>
+        <tr><td>gut</td><td>0.71 · over threshold</td><td>0.83</td><td>something is wrong, mostly pain</td></tr>
+      </table></div>
+      <p class="small" style="margin-top:10px">Dashboard: <a href="#/dashboard">http://127.0.0.1:52817/?token=…</a></p>
+    </div>
+    <div class="card when">
+      <h3>/senses</h3>
+      <p>Whenever you wonder why the agent seems stuck, before deciding to <code>/compact</code> or start fresh,
+        or at the end of a long session to see how it went.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 14 · Status line -->
+<section class="slide" data-title="Status line" id="statusline">
+  <span class="kicker"><span class="dot"></span>Always visible</span>
+  <h2>Senses in your status line.</h2>
+  <p class="lead">One compact line under the prompt. <code>!</code> means over threshold, <code>–</code> means no
+    data yet. It also tells <code>interoception</code> the exact context window size.</p>
+  <div class="grid">
+    <div class="card">
+      <span class="label">Output</span>
+      <div class="code"><div class="head">status line</div><pre>pain <span class="k">0.80!</span> · ctx <span class="k">0.84!</span> · time 0.08 · smell <span class="k">0.75!</span> · gut <span class="k">0.71!</span></pre></div>
+      <div class="code"><div class="head">fresh session</div><pre>pain – · ctx 0.45 · time 0.00 · smell – · gut 0.30</pre></div>
+    </div>
+    <div>
+      <div class="card">
+        <span class="label">Set it up (plugins cannot do this themselves)</span>
+        <div class="code"><div class="head">~/.claude/settings.json<button class="copy">Copy</button></div><pre>{
+  <span class="k">"statusLine"</span>: {
+    <span class="k">"type"</span>: <span class="s">"command"</span>,
+    <span class="k">"command"</span>: <span class="s">"~/netsi-agent-senses/bin/netsi-senses-statusline"</span>
+  }
+}</pre></div>
+      </div>
+      <div class="card when" style="margin-top:20px">
+        <h3>the status line</h3>
+        <p>Always, if you have room for it. It is the cheapest way to notice a sense going up while you are busy
+          reading the agent's answer.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 15 · Hooks & privacy -->
+<section class="slide" data-title="Hooks & privacy" id="hooks">
+  <span class="kicker"><span class="dot"></span>Claude Code adapter</span>
+  <h2>Hooks record metadata, never content.</h2>
+  <p class="lead">Five Claude Code hooks feed the senses. They never block or slow the session down: any error is
+    swallowed and the hook exits cleanly.</p>
+  <div class="grid">
+    <div class="card">
+      <span class="label">What each hook records</span>
+      <div class="table-wrap"><table>
+        <tr><th>Hook</th><th>Event</th></tr>
+        <tr><td><code>UserPromptSubmit</code></td><td><code>prompt</code> + context usage from the transcript</td></tr>
+        <tr><td><code>PreToolUse</code></td><td><code>tool_call</code></td></tr>
+        <tr><td><code>PostToolUse</code></td><td><code>tool_result ok</code> (+ lint count)</td></tr>
+        <tr><td><code>PostToolUseFailure</code></td><td><code>tool_result</code> failed + exit code</td></tr>
+        <tr><td><code>Stop</code></td><td><code>turn_end</code> + context usage</td></tr>
+      </table></div>
+    </div>
+    <div>
+      <div class="card">
+        <span class="label">A stored event, in full</span>
+        <div class="code"><div class="head">events.jsonl</div><pre>{<span class="k">"schemaVersion"</span>:<span class="n">1</span>,<span class="k">"ts"</span>:<span class="n">1792446944603</span>,
+ <span class="k">"session"</span>:<span class="s">"a1b2c3"</span>,<span class="k">"kind"</span>:<span class="s">"tool_result"</span>,
+ <span class="k">"source"</span>:<span class="s">"claude-code"</span>,<span class="k">"tool"</span>:<span class="s">"Bash"</span>,
+ <span class="k">"ok"</span>:<span class="n">false</span>,<span class="k">"exitCode"</span>:<span class="n">1</span>}</pre></div>
+        <p class="small">No prompt, no command, no output, no file path. A test replays recorded hook payloads full
+          of secrets and checks that none of them reach the log.</p>
+      </div>
+      <div class="card when" style="margin-top:20px">
+        <h3>the hooks</h3>
+        <p>Automatically, as soon as the plugin is loaded. Deno runs with narrow permissions: it can write only the
+          data folder and read only that folder and your transcripts.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 16 · Skill -->
+<section class="slide" data-title="Behaviour skill" id="skill">
+  <span class="kicker"><span class="dot"></span>Skill</span>
+  <h2>A skill that says what to do with a feeling.</h2>
+  <p class="lead">A sense is only useful if it changes behaviour. The <code>senses</code> skill is plain markdown
+    with rules per sense. Edit it to fit how you work.</p>
+  <div class="card" style="margin-top:24px">
+    <div class="table-wrap"><table>
+      <tr><th>Sense over threshold</th><th>The agent should</th></tr>
+      <tr><td>pain</td><td>Stop retrying. Read the last error in full, state its cause in one sentence, then change approach. Never run the same failing command a third time unchanged.</td></tr>
+      <tr><td>interoception</td><td>Finish the current step, write a short summary of state and next steps, and suggest <code>/compact</code> or a fresh session.</td></tr>
+      <tr><td>time</td><td>Give you a two-line status and ask whether to continue in the current direction.</td></tr>
+      <tr><td>smell</td><td>Fix the reported problems before adding new code.</td></tr>
+      <tr><td>gut</td><td>Say which sense drives it. If it is marked low confidence, check the senses first.</td></tr>
+    </table></div>
+  </div>
+  <div class="grid">
+    <div class="code"><div class="head">skills/senses/SKILL.md (excerpt)</div><pre>## Tuning your own senses
+- Tune a sense when it is wrong, not when it
+  is inconvenient.
+- Never tune a sense to silence a true signal.
+- Prefer small steps, and say what you changed
+  and why.</pre></div>
+    <div class="card when"><h3>the skill</h3><p>Loaded automatically with the plugin. Claude picks it up when a sense
+      triggers, when tool calls keep failing, or before it calls <code>senses_set</code>.</p></div>
+  </div>
+</section>
+
+<!-- 17 · Configuration -->
+<section class="slide" data-title="Configuration" id="config">
+  <span class="kicker"><span class="dot"></span>senses.json</span>
+  <h2>One small file you can partially override.</h2>
+  <p class="lead">Write only what you want to change: everything else comes from the defaults. Edits apply without a
+    restart. An invalid file is ignored, the last valid config stays in use, and the dashboard shows why.</p>
+  <div class="grid">
+    <div class="card tabs">
+      <div role="tablist" aria-label="config examples">
+        <button role="tab" aria-selected="true">More sensitive pain</button><button role="tab" aria-selected="false">No linters</button>
+      </div>
+      <div role="tabpanel">
+        <div class="code"><div class="head">.netsi-agent-senses/senses.json<button class="copy">Copy</button></div><pre>{
+  <span class="k">"senses"</span>: {
+    <span class="k">"pain"</span>: {
+      <span class="k">"threshold"</span>: <span class="n">0.5</span>,
+      <span class="k">"bounds"</span>: { <span class="k">"threshold"</span>: [<span class="n">0.3</span>, <span class="n">0.9</span>] }
+    }
+  }
+}</pre></div>
+        <p class="small">Triggers earlier, and gives the agent more room to tune.</p>
+      </div>
+      <div role="tabpanel" hidden>
+        <div class="code"><div class="head">.netsi-agent-senses/senses.json<button class="copy">Copy</button></div><pre>{
+  <span class="k">"senses"</span>: { <span class="k">"smell"</span>: { <span class="k">"enabled"</span>: <span class="n">false</span> } },
+  <span class="k">"gut"</span>: { <span class="k">"weights"</span>: { <span class="k">"interoception"</span>: <span class="n">2</span> } }
+}</pre></div>
+        <p class="small">Smell off, and context weighs double in the gut feeling.</p>
+      </div>
+    </div>
+    <div class="card">
+      <span class="label">Fields per sense</span>
+      <div class="table-wrap"><table>
+        <tr><td><code>enabled</code></td><td>Off: no reading, no part in gut</td></tr>
+        <tr><td><code>gain</code></td><td>Multiplies the raw value</td></tr>
+        <tr><td><code>threshold</code></td><td>Value at which it triggers</td></tr>
+        <tr><td><code>window</code></td><td>Sliding window in seconds</td></tr>
+        <tr><td><code>bounds</code></td><td>The agent's room for the three above</td></tr>
+        <tr><td><code>action</code></td><td><code>inform</code>, <code>warn</code>, <code>block</code> or <code>influence</code></td></tr>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+<!-- 18 · Audit -->
+<section class="slide" data-title="Audit log" id="audit">
+  <span class="kicker"><span class="dot"></span>Accountability</span>
+  <h2>Every change has a who, a when and a why.</h2>
+  <p class="lead">Each config change, by you in the dashboard or by the agent over MCP, is written to an append-only
+    audit log with the actor, the old and new value, and the reason. Logs rotate at 5 MB.</p>
+  <div class="grid">
+    <div class="card">
+      <span class="label">An agent change</span>
+      <div class="code"><div class="head">audit.jsonl</div><pre>{
+  <span class="k">"ts"</span>: <span class="n">1792450100000</span>,
+  <span class="k">"actor"</span>: <span class="s">"agent"</span>,
+  <span class="k">"type"</span>: <span class="s">"config_change"</span>,
+  <span class="k">"sense"</span>: <span class="s">"pain"</span>,
+  <span class="k">"from"</span>: { <span class="k">"threshold"</span>: <span class="n">0.6</span> },
+  <span class="k">"to"</span>: { <span class="k">"threshold"</span>: <span class="n">0.7</span> },
+  <span class="k">"reason"</span>: <span class="s">"Expected failures while writing tests first"</span>
+}</pre></div>
+    </div>
+    <div>
+      <div class="card">
+        <span class="label">Export</span>
+        <p>Click <b style="font-weight:normal">Export audit log</b> in the dashboard to download the full log as JSONL,
+          or read the file directly. The dashboard also shows the 50 latest changes in a table, with agent rows
+          marked in text.</p>
+      </div>
+      <div class="card when" style="margin-top:20px">
+        <h3>the audit log</h3>
+        <p>When you want to know why a sense stopped triggering, review what the agent changed overnight, or
+          explain a session afterwards.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 19 · Extend & roadmap -->
+<section class="slide" data-title="Extend it · roadmap" id="roadmap">
+  <span class="kicker"><span class="dot"></span>Open source</span>
+  <h2>Build your own senses. Bring your own harness.</h2>
+  <p class="lead">A sense is a pure function from events to a reading. An adapter is the only code that knows a
+    harness. Both are documented and tested against recorded sessions.</p>
+  <div class="grid">
+    <div class="card">
+      <span class="label">A new sense in ~20 lines</span>
+      <div class="code"><div class="head">src/core/sensors/my-sense.ts</div><pre><span class="k">export const</span> mySense: Sensor = {
+  id: <span class="s">"my-sense"</span>, human: <span class="s">"balance"</span>, category: <span class="s">"bodily"</span>,
+  compute({ events, config, now }) {
+    <span class="k">const</span> recent = inWindow(events, config, now);
+    <span class="k">if</span> (!recent.length)
+      <span class="k">return</span> { value: <span class="n">0</span>, label: <span class="s">"no data"</span>, confidence: <span class="n">0</span> };
+    <span class="c">// … your rule</span>
+    <span class="k">return</span> { value: raw * config.gain, label, confidence };
+  },
+};</pre></div>
+      <p class="small">Guides: <a href="https://github.com/netsi1964/netsi-agent-senses/blob/main/docs/sensors.md">sensors</a> ·
+        <a href="https://github.com/netsi1964/netsi-agent-senses/blob/main/docs/adapters.md">adapters</a> ·
+        <a href="https://github.com/netsi1964/netsi-agent-senses/blob/main/docs/configuration.md">configuration</a></p>
+    </div>
+    <div class="card">
+      <span class="label">Status and roadmap</span>
+      <div class="table-wrap"><table>
+        <tr><th>Phase</th><th>What</th><th>Status</th></tr>
+        <tr><td>1</td><td>Four senses, gut, MCP, dashboard, hooks, status line, skill, audit</td><td>✓ built</td></tr>
+        <tr><td>1</td><td>Interventions: inform, warn, block (with override and timeout), influence</td><td>planned next</td></tr>
+        <tr><td>2</td><td>Codex adapter</td><td>planned</td></tr>
+        <tr><td>3</td><td>More senses: balance, proprioception, trust, empathy …</td><td>planned</td></tr>
+        <tr><td>4</td><td>Plugin API for your own senses, shared profiles</td><td>planned</td></tr>
+      </table></div>
+      <p class="small" style="margin-top:10px">Today the senses inform; they do not yet intervene on their own.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 20 · Coffee -->
+<section class="slide" data-title="Buy me a coffee" id="coffee">
+  <span class="kicker"><span class="dot"></span>Thank you</span>
+  <h2>If it helped, buy me a coffee ☕</h2>
+  <p class="lead">netsi-agent-senses is free and open source under Apache-2.0. Made by Sten Hougaard
+    (<a href="https://netsi.dk">netsi.dk</a>).</p>
+  <div class="grid">
+    <div class="card coffee">
+      <p style="font-size:1.25rem;margin-bottom:0">Buy me a coffee :-)</p>
+      <p class="quip" id="quip">Help me caffeinate the next idea.</p>
+      <a href="https://www.buymeacoffee.com/netsi1964" target="_blank" rel="noopener noreferrer">
+        <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" width="187" height="52" loading="lazy">
+      </a>
+      <p class="small" style="margin-top:14px"><a href="https://www.buymeacoffee.com/netsi1964" target="_blank" rel="noopener noreferrer">buymeacoffee.com/netsi1964</a></p>
+    </div>
+    <div class="card">
+      <span class="label">Other ways to help</span>
+      <ul>
+        <li>Star the repo on <a href="https://github.com/netsi1964/netsi-agent-senses">GitHub</a>.</li>
+        <li>Try it for a week and <a href="https://github.com/netsi1964/netsi-agent-senses/issues">open an issue</a> with what the senses got right and wrong.</li>
+        <li>Build a sense or a Codex adapter: see <a href="https://github.com/netsi1964/netsi-agent-senses/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>.</li>
+      </ul>
+      <div class="ctas" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
+        <a class="btn primary" href="#/install">Install it →</a>
+        <a class="btn" href="#/1">Start over</a>
+      </div>
+    </div>
+  </div>
+  <footer class="note">Apache-2.0 · © Sten Hougaard</footer>
+</section>
+
+</main>
+
+<nav class="nav" aria-label="Slide navigation">
+  <button class="btn" id="prev" aria-label="Previous slide">←</button>
+  <div class="progress" aria-hidden="true"><span id="bar"></span></div>
+  <span class="count" id="count" aria-live="polite">1 / 20</span>
+  <span class="hint hide-sm">← → or swipe</span>
+  <button class="btn primary" id="next" aria-label="Next slide">→</button>
+</nav>
+
+<script>
+(() => {
+  document.body.classList.remove("no-js");
+  const slides = [...document.querySelectorAll(".slide")];
+  const bar = document.getElementById("bar");
+  const count = document.getElementById("count");
+  const tocList = document.getElementById("tocList");
+  const toc = document.getElementById("toc");
+  const tocBtn = document.getElementById("tocBtn");
+  let current = 0;
+
+  // ids for hash routing: #/3 or #/install
+  const keyOf = (i) => slides[i].id || String(i + 1);
+  slides.forEach((s, i) => {
+    const li = document.createElement("li");
+    const a = document.createElement("a");
+    a.href = `#/${keyOf(i)}`;
+    a.textContent = s.dataset.title || `Slide ${i + 1}`;
+    a.addEventListener("click", () => setToc(false));
+    li.append(a);
+    tocList.append(li);
+  });
+
+  function indexFromHash() {
+    const key = decodeURIComponent(location.hash.replace(/^#\/?/, ""));
+    if (!key) return 0;
+    const byId = slides.findIndex((s) => s.id === key);
+    if (byId >= 0) return byId;
+    const n = parseInt(key, 10);
+    return Number.isFinite(n) ? Math.min(Math.max(n - 1, 0), slides.length - 1) : 0;
+  }
+
+  function show(i, push = true) {
+    current = Math.min(Math.max(i, 0), slides.length - 1);
+    slides.forEach((s, j) => {
+      s.classList.toggle("active", j === current);
+      s.setAttribute("aria-hidden", j === current ? "false" : "true");
+    });
+    bar.style.width = `${((current + 1) / slides.length) * 100}%`;
+    count.textContent = `${current + 1} / ${slides.length}`;
+    document.title = `${slides[current].dataset.title} · netsi-agent-senses`;
+    tocList.querySelectorAll("a").forEach((a, j) => a.setAttribute("aria-current", j === current ? "true" : "false"));
+    if (push) history.replaceState(null, "", `#/${keyOf(current)}`);
+    window.scrollTo({ top: 0 });
+  }
+
+  window.addEventListener("hashchange", () => show(indexFromHash(), false));
+  document.getElementById("prev").addEventListener("click", () => show(current - 1));
+  document.getElementById("next").addEventListener("click", () => show(current + 1));
+
+  document.addEventListener("keydown", (e) => {
+    if (e.target.closest("input, textarea, select, [role=tab]") || e.altKey || e.ctrlKey || e.metaKey) return;
+    if (e.key === "ArrowRight" || e.key === "PageDown" || (e.key === " " && !e.shiftKey)) { e.preventDefault(); show(current + 1); }
+    else if (e.key === "ArrowLeft" || e.key === "PageUp" || (e.key === " " && e.shiftKey)) { e.preventDefault(); show(current - 1); }
+    else if (e.key === "Home") show(0);
+    else if (e.key === "End") show(slides.length - 1);
+    else if (e.key === "Escape") setToc(false);
+  });
+
+  // swipe
+  let x0 = null, y0 = null;
+  document.addEventListener("touchstart", (e) => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+  document.addEventListener("touchend", (e) => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5 && !e.target.closest("pre, .table-wrap")) show(current + (dx < 0 ? 1 : -1));
+    x0 = y0 = null;
+  });
+
+  // table of contents
+  function setToc(open) { toc.hidden = !open; tocBtn.setAttribute("aria-expanded", String(open)); }
+  tocBtn.addEventListener("click", () => setToc(toc.hidden));
+  document.addEventListener("click", (e) => { if (!toc.hidden && !e.target.closest("#toc, #tocBtn")) setToc(false); });
+
+  // tabs
+  document.querySelectorAll(".tabs").forEach((group, g) => {
+    const tabs = [...group.querySelectorAll('[role="tab"]')];
+    const panels = [...group.querySelectorAll('[role="tabpanel"]')];
+    tabs.forEach((t, i) => {
+      t.id = `tab-${g}-${i}`; panels[i].id = `panel-${g}-${i}`;
+      t.setAttribute("aria-controls", panels[i].id); panels[i].setAttribute("aria-labelledby", t.id);
+      t.tabIndex = i === 0 ? 0 : -1;
+      const select = () => tabs.forEach((u, j) => {
+        u.setAttribute("aria-selected", String(j === i)); u.tabIndex = j === i ? 0 : -1; panels[j].hidden = j !== i;
+      });
+      t.addEventListener("click", select);
+      t.addEventListener("keydown", (e) => {
+        const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+        if (!d) return;
+        e.preventDefault(); e.stopPropagation();
+        const n = tabs[(i + d + tabs.length) % tabs.length]; n.click(); n.focus();
+      });
+    });
+  });
+
+  // copy buttons copy the code without prompts
+  document.querySelectorAll(".copy").forEach((b) => b.addEventListener("click", async () => {
+    const pre = b.closest(".code").querySelector("pre").cloneNode(true);
+    pre.querySelectorAll(".prompt").forEach((p) => p.remove());
+    const text = pre.textContent.split("\n").filter((l, i) => i === 0 || !/^http:\/\/127/.test(l)).join("\n").trim();
+    try { await navigator.clipboard.writeText(text); b.textContent = "Copied"; }
+    catch { b.textContent = "Select & copy"; }
+    setTimeout(() => (b.textContent = "Copy"), 1500);
+  }));
+
+  // theme
+  const themeBtn = document.getElementById("themeBtn");
+  const root = document.documentElement;
+  const isDark = () => root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  const applyTheme = (t) => { if (t) root.dataset.theme = t; themeBtn.setAttribute("aria-pressed", String(isDark())); };
+  try { applyTheme(localStorage.getItem("senses-theme")); } catch { applyTheme(null); }
+  themeBtn.addEventListener("click", () => {
+    const next = isDark() ? "light" : "dark";
+    applyTheme(next);
+    try { localStorage.setItem("senses-theme", next); } catch { /* private mode */ }
+  });
+
+  // coffee quips, same tone as netsi.dk
+  const quips = [
+    "If this has been of any use whatsoever, a coffee will be accepted with a stiff upper lip and very poorly concealed delight.",
+    "Nobody expects a donation. Which is precisely why it would be so tremendously effective.",
+    "The developer is currently running on fumes, stubbornness and an alarmingly small amount of coffee.",
+    "A small donation becomes coffee, then code, then slightly better senses. It's basically alchemy.",
+    "I shan't beg. I shall merely stand here, looking hopeful, holding an empty cup.",
+    "Be warned: a single coffee may trigger another sense. We accept no responsibility.",
+    "Help me caffeinate the next idea.",
+  ];
+  document.getElementById("quip").textContent = quips[Math.floor(Math.random() * quips.length)];
+
+  show(indexFromHash(), false);
+})();
+</script>
+</body>
+</html>
