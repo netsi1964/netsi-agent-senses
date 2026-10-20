@@ -65,6 +65,20 @@ You need [Claude Code](https://claude.com/claude-code) and [Deno](https://deno.c
    It shows e.g. `pain 0.80! · ctx 0.42 · time 0.10 · smell – · gut 0.51` (`!` = over threshold,
    `–` = no data yet). It also gives `interoception` the exact context window size.
 
+## Disable or uninstall
+
+| Goal | How |
+|---|---|
+| Disable one sense | Untick it in the dashboard, or set `"enabled": false` for it in `.netsi-agent-senses/senses.json`. Only you can do this, never the agent. |
+| Pause the plugin | Start Claude Code without `--plugin-dir`. |
+| Stop the dashboard | `kill "$(sed -n 's/.*"pid": *\([0-9]*\).*/\1/p' .netsi-agent-senses/dashboard.json)"` in your project. |
+
+To remove it completely:
+
+1. Delete the `statusLine` block from your Claude Code settings, if you added it.
+2. In each project, delete the data: `rm -rf .netsi-agent-senses` (export the audit log first if you want it).
+3. Delete the plugin: `rm -rf ~/netsi-agent-senses`.
+
 ## What you get
 
 - **MCP server** with `senses_read`, `senses_set` and `senses_history`, so the agent can read its senses and
