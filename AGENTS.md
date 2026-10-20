@@ -42,6 +42,7 @@ dashboard) can read and tune them. V1 ships as a Claude Code plugin; Codex comes
 | `skills/` | Skill with behaviour rules for the agent |
 | `commands/` | Slash command `/senses` |
 | `docs/` | User and contributor documentation |
+| `site/` | Feature tour slides (single HTML), published to GitHub Pages |
 | `.claude-plugin/` | Plugin manifest |
 
 ## Commands

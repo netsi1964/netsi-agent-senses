@@ -14,6 +14,7 @@ All notable changes are documented here. The format follows [Keep a Changelog](h
 - Claude Code hooks adapter, status line script, `/senses` command and `senses` skill (PRD-FEAT-007).
 - Agent self-adjustment limited to human-set bounds, with audit log and export (PRD-FEAT-009, 010).
 - Docs: sensors, adapters, configuration.
+- Feature tour slides in `site/`, published to GitHub Pages by `.github/workflows/pages.yml`.
 - PRD v0.3: `signals` event field, `time` formula, status line note.
 - PRD v0.2 in `development/PRD.md`.
 - Repo scaffolding: licence, contributor and security docs, AI-agent instructions, plugin manifest, CI.
