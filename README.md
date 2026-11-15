@@ -4,6 +4,7 @@ Human-like senses for AI agents. Pain, interoception, a sense of time, smell and
 sensors over what an agent harness does, readable by the agent and tunable by you.
 
 **Feature tour:** [netsi1964.github.io/netsi-agent-senses](https://netsi1964.github.io/netsi-agent-senses/), one slide per feature, with examples and real output.
+**Developer tour:** [netsi1964.github.io/netsi-agent-senses/developers/](https://netsi1964.github.io/netsi-agent-senses/developers/), concepts, real code, terminal recordings and install steps in English, Danish, Spanish and Chinese.
 
 > **Status: alpha, unreleased.** Senses, MCP server, hooks, status line, dashboard and audit log work.
 > Interventions beyond recording (warn, block, influence) are not built yet. The PRD is in Danish:

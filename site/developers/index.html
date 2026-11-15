@@ -1,0 +1,1120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Agent Senses Tour</title>
+<meta name="description" content="A developer tour of netsi-agent-senses: pain, interoception, time, smell and gut feeling for Claude Code. Concepts, real code, terminal recordings and install steps in English, Danish, Spanish and Chinese.">
+<meta property="og:title" content="netsi-agent-senses: developer tour">
+<meta property="og:description" content="Senses for AI coding agents. Concepts, code, terminal and install in 4 languages.">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23ea580c'/%3E%3Cpath d='M7 17c3-6 6 6 9 0s6 6 9 0' stroke='white' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Mono:wght@400;500&family=Montserrat:wght@400;500;600&family=Noto+Sans+SC:wght@400;500&display=swap">
+<style>
+/* Layout: netsi.dk feel. White page, orange-50 hero band, one centred 1080px column,
+   dark terminals as the only "objects" on the page. Light mode only, by request. */
+:root {
+  color-scheme: light;
+  --bg: #ffffff;
+  --band: #fff7ed;
+  --ink: #1c1917;
+  --muted: #57534e;
+  --faint: #a8a29e;
+  --line: #e7e5e4;
+  --soft: #fafaf9;
+  --accent: #ea580c;
+  --accent-deep: #c2410c;
+  --accent-soft: #ffedd5;
+  --teal: #0f766e;
+  --teal-soft: #ccfbf1;
+  --ok: #15803d;
+  --bad: #b91c1c;
+  --bad-soft: #fee2e2;
+  --term: #1c1917;
+  --term-2: #292524;
+  --term-ink: #f5f5f4;
+  --term-dim: #a8a29e;
+  --term-key: #fdba74;
+  --term-str: #86efac;
+  --term-num: #93c5fd;
+  --term-bad: #fca5a5;
+  --font: Avenir, Montserrat, Corbel, 'URW Gothic', source-sans-pro, 'Noto Sans SC', 'PingFang SC', sans-serif;
+  --mono: 'Fira Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --r: 14px;
+  --shadow: 0 1px 2px rgba(28,25,23,.05), 0 10px 30px rgba(28,25,23,.07);
+}
+* { box-sizing: border-box; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--font); font-size: 16px; line-height: 1.6; font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap {
+  max-width: 1080px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+a { color: var(--accent-deep); text-underline-offset: 3px; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+h1, h2, h3 { font-weight: 500; line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: -.01em; }
+h2 { font-size: clamp(1.6rem, 3.2vw, 2.2rem); }
+h3 { font-size: 1.12rem; }
+p { margin: 0; }
+code { font-family: var(--mono); font-size: .86em; background: var(--soft); border: 1px solid var(--line); padding: .05em .35em; border-radius: 5px; }
+.eyebrow { font-size: .74rem; text-transform: uppercase; letter-spacing: .12em; color: var(--accent-deep); font-weight: 600; }
+.lead { color: var(--muted); font-size: 1.08rem; max-width: 62ch; }
+
+/* ---------- nav ---------- */
+.nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: rgba(255,255,255,.92); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.nav .wrap { display: flex; align-items: center; gap: 18px; height: 60px; }
+.brand { display: flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font-weight: 500; white-space: nowrap; }
+.brand span { color: var(--accent); }
+.links { display: flex; gap: 18px; flex: 1; overflow-x: auto; scrollbar-width: none; }
+.links a { color: var(--muted); text-decoration: none; font-size: .92rem; white-space: nowrap; }
+.links a:hover { color: var(--accent-deep); }
+.lang { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; flex: none; }
+.lang button { font: inherit; font-size: .8rem; border: 0; background: var(--bg); color: var(--muted); padding: 6px 9px; cursor: pointer; }
+.lang button + button { border-left: 1px solid var(--line); }
+.lang button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+@media (max-width: 760px) { .links { display: none; } .nav .wrap { justify-content: space-between; } }
+
+/* ---------- hero ---------- */
+.hero { background: linear-gradient(90deg, var(--band), var(--bg)); border-bottom: 1px solid var(--line); }
+.hero .wrap { display: grid; grid-template-columns: 1.05fr 1fr; gap: 40px; align-items: center; padding-block: 56px; }
+.hero h1 { font-size: clamp(2.1rem, 5vw, 3.3rem); margin: 10px 0 16px; }
+.hero h1 em { font-style: normal; color: var(--accent); }
+.cta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 24px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; height: 42px; padding: 0 18px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); text-decoration: none; font: inherit; font-size: .95rem; cursor: pointer; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover { background: var(--accent-deep); }
+.tagrow { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
+.tag { font-size: .78rem; color: var(--muted); border: 1px solid var(--line); background: var(--bg); padding: 3px 9px; border-radius: 999px; }
+@media (max-width: 860px) { .hero .wrap { grid-template-columns: minmax(0,1fr); padding-block: 36px; } }
+
+/* ---------- terminal ---------- */
+.term { background: var(--term); color: var(--term-ink); border-radius: var(--r); box-shadow: var(--shadow); overflow: hidden; min-width: 0; }
+.term-bar { display: flex; align-items: center; gap: 7px; padding: 10px 14px; background: var(--term-2); }
+.term-bar i { width: 11px; height: 11px; border-radius: 50%; background: #57534e; display: block; }
+.term-bar i:nth-child(1) { background: #f87171; } .term-bar i:nth-child(2) { background: #fbbf24; } .term-bar i:nth-child(3) { background: #4ade80; }
+.term-bar b { margin-left: 8px; font-weight: 400; font-size: .78rem; color: var(--term-dim); font-family: var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.term pre { margin: 0; padding: 16px 18px; font-family: var(--mono); font-size: .8rem; line-height: 1.6; overflow-x: auto; white-space: pre; }
+.t-dim { color: var(--term-dim); } .t-key { color: var(--term-key); } .t-str { color: var(--term-str); } .t-num { color: var(--term-num); } .t-bad { color: var(--term-bad); } .t-acc { color: #fb923c; } .t-ok { color: #4ade80; }
+.cursor { display: inline-block; width: .55em; height: 1.05em; vertical-align: -2px; background: var(--term-ink); animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.statusline { border-top: 1px solid #44403c; padding: 9px 18px; font-family: var(--mono); font-size: .78rem; color: var(--term-dim); white-space: nowrap; overflow-x: auto; }
+.statusline .hot { color: var(--term-bad); }
+
+/* ---------- sections ---------- */
+section { padding-block: 72px; border-bottom: 1px solid var(--line); }
+section.alt { background: var(--soft); }
+.head { display: grid; gap: 10px; margin-bottom: 32px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 16px; }
+.grid5 { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 14px; }
+@media (max-width: 960px) { .grid5 { grid-template-columns: repeat(3, minmax(0,1fr)); } .grid4 { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+@media (max-width: 560px) { .grid5, .grid4 { grid-template-columns: minmax(0,1fr); } }
+
+.prob { padding: 18px; border-left: 3px solid var(--accent); background: var(--bg); display: grid; gap: 6px; }
+.prob b { font-weight: 500; }
+.prob p { color: var(--muted); font-size: .92rem; }
+
+/* sense cards */
+.sense { background: var(--bg); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 8px; align-content: start; min-width: 0; transition: border-color .3s; }
+.sense.over { border-color: var(--bad); }
+.sense .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.sense .id { font-family: var(--mono); font-size: .92rem; }
+.sense .hum { font-size: .75rem; color: var(--muted); }
+.gauge { width: 100%; max-width: 160px; justify-self: center; display: block; }
+.gauge .trk { stroke: var(--line); }
+.gauge .val { stroke: var(--accent); transition: stroke-dashoffset .8s cubic-bezier(.2,.8,.2,1), stroke .3s; }
+.sense.over .gauge .val { stroke: var(--bad); }
+.gauge .thr { stroke: var(--ink); }
+.gauge text { fill: var(--ink); font-family: var(--mono); }
+.gauge .sub { fill: var(--muted); font-size: 9px; }
+.state { font-size: .74rem; text-align: center; height: 1.3em; color: var(--muted); }
+.sense.over .state { color: var(--bad); font-weight: 600; }
+.sense .lbl { font-family: var(--mono); font-size: .72rem; color: var(--muted); min-height: 2.6em; }
+.conf { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; font-size: .72rem; color: var(--muted); }
+.conf .bar { height: 5px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.conf .bar i { display: block; height: 100%; background: var(--teal); transition: width .6s; }
+.sense .what { font-size: .82rem; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 8px; }
+.simnote { margin-top: 14px; font-size: .82rem; color: var(--muted); display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+/* flow diagram */
+.flowbox { background: var(--bg); border: 1px solid var(--line); border-radius: var(--r); overflow-x: auto; }
+.flowbox svg { display: block; min-width: 860px; width: 100%; height: auto; }
+.flowbox .node rect { fill: var(--bg); stroke: var(--line); stroke-width: 1.5; }
+.flowbox .node.core rect { fill: var(--band); stroke: #fdba74; }
+.flowbox .node.out rect { fill: var(--teal-soft); stroke: #5eead4; }
+.flowbox text { font-family: var(--font); fill: var(--ink); font-size: 13px; }
+.flowbox .mono { font-family: var(--mono); font-size: 10.5px; fill: var(--muted); }
+.flowbox .path { fill: none; stroke: var(--faint); stroke-width: 1.5; stroke-dasharray: 4 4; }
+.flowbox .pulse { fill: var(--accent); }
+.flowbox .zone { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; fill: var(--faint); }
+.steps3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; margin-top: 20px; }
+.steps3 div { display: grid; gap: 4px; }
+.steps3 b { font-weight: 500; }
+.steps3 p { color: var(--muted); font-size: .9rem; }
+@media (max-width: 760px) { .steps3 { grid-template-columns: minmax(0,1fr); } }
+
+/* code */
+.codegrid { display: grid; grid-template-columns: minmax(0,1.25fr) minmax(0,1fr); gap: 20px; align-items: start; }
+@media (max-width: 900px) { .codegrid { grid-template-columns: minmax(0,1fr); } }
+.tabs { display: flex; gap: 2px; background: var(--term-2); padding: 6px 6px 0; overflow-x: auto; }
+.tabs button { font: inherit; font-family: var(--mono); font-size: .76rem; border: 0; background: transparent; color: var(--term-dim); padding: 7px 12px; border-radius: 7px 7px 0 0; cursor: pointer; white-space: nowrap; }
+.tabs button[aria-selected="true"] { background: var(--term); color: var(--term-ink); }
+.codenote { padding: 10px 18px 14px; font-size: .82rem; color: var(--term-dim); border-top: 1px solid #44403c; font-family: var(--font); }
+.k { color: #f0abfc; } .s { color: var(--term-str); } .n { color: var(--term-num); } .c { color: #78716c; font-style: italic; } .f { color: var(--term-key); }
+.hl { background: rgba(234,88,12,.22); display: inline-block; width: 100%; }
+
+.lab { background: var(--bg); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.lab .btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.lab .btn { height: 36px; font-size: .88rem; }
+.btn.okb { border-color: #86efac; color: var(--ok); }
+.btn.badb { border-color: #fca5a5; color: var(--bad); }
+.chips { display: flex; gap: 5px; flex-wrap: wrap; min-height: 30px; align-items: center; }
+.chip { font-family: var(--mono); font-size: .7rem; padding: 3px 7px; border-radius: 6px; border: 1px solid; animation: pop .3s ease-out; }
+.chip.ok { color: var(--ok); border-color: #86efac; background: #f0fdf4; }
+.chip.no { color: var(--bad); border-color: #fca5a5; background: var(--bad-soft); }
+.chip.empty { color: var(--faint); border-style: dashed; animation: none; }
+@keyframes pop { from { transform: scale(.6); opacity: 0; } }
+.labout { background: var(--term); color: var(--term-ink); border-radius: 10px; padding: 12px 14px; font-family: var(--mono); font-size: .76rem; white-space: pre; overflow-x: auto; }
+.math { font-family: var(--mono); font-size: .78rem; color: var(--muted); display: grid; gap: 4px; }
+.math b { color: var(--ink); font-weight: 500; }
+.meter { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; font-family: var(--mono); font-size: .85rem; }
+.meter .rail { position: relative; height: 12px; background: var(--line); border-radius: 6px; }
+.meter .rail i { position: absolute; inset: 0 auto 0 0; background: var(--accent); border-radius: 6px; transition: width .5s cubic-bezier(.2,.8,.2,1), background .3s; }
+.meter .rail .t { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--ink); }
+.meter.over .rail i { background: var(--bad); }
+
+/* terminal player */
+.player .scenes { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.scene-btn { font: inherit; font-size: .9rem; border: 1px solid var(--line); background: var(--bg); color: var(--muted); padding: 8px 14px; border-radius: 8px; cursor: pointer; }
+.scene-btn[aria-pressed="true"] { border-color: var(--accent); color: var(--ink); background: var(--band); }
+.player pre { height: 430px; overflow-y: auto; }
+.player .ctrl { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-top: 12px; font-size: .86rem; color: var(--muted); flex-wrap: wrap; }
+
+/* safety */
+.safe { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 20px; }
+@media (max-width: 820px) { .safe { grid-template-columns: minmax(0,1fr); } }
+.card { background: var(--bg); border: 1px solid var(--line); border-radius: var(--r); padding: 20px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .88rem; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-weight: 500; color: var(--muted); font-size: .76rem; text-transform: uppercase; letter-spacing: .06em; }
+td { font-variant-numeric: tabular-nums; }
+td.mono, th.mono { font-family: var(--mono); font-size: .82rem; }
+.yes { color: var(--ok); } .no { color: var(--bad); }
+ul.plain { margin: 0; padding-left: 1.1em; color: var(--muted); display: grid; gap: 6px; font-size: .94rem; }
+
+/* install */
+.install { display: grid; gap: 14px; counter-reset: st; }
+.step { display: grid; grid-template-columns: 44px minmax(0,1fr); gap: 16px; align-items: start; }
+.step .num { width: 44px; height: 44px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-deep); display: grid; place-items: center; font-weight: 600; font-family: var(--mono); }
+.step .body { display: grid; gap: 8px; min-width: 0; padding-top: 8px; }
+.step .body p { color: var(--muted); font-size: .94rem; }
+.snip { position: relative; background: var(--term); color: var(--term-ink); border-radius: 10px; }
+.snip pre { margin: 0; padding: 12px 84px 12px 14px; font-family: var(--mono); font-size: .8rem; overflow-x: auto; white-space: pre; }
+.copy { position: absolute; top: 8px; right: 8px; font: inherit; font-size: .74rem; border: 1px solid #57534e; background: var(--term-2); color: var(--term-ink); padding: 4px 9px; border-radius: 6px; cursor: pointer; }
+.copy.done { border-color: #4ade80; color: #4ade80; }
+.req { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+
+/* status */
+.status { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; }
+@media (max-width: 760px) { .status { grid-template-columns: minmax(0,1fr); } }
+.pill { display: inline-block; font-size: .72rem; padding: 2px 9px; border-radius: 999px; font-weight: 600; letter-spacing: .04em; justify-self: start; }
+.pill.done { background: #dcfce7; color: var(--ok); }
+.pill.next { background: var(--accent-soft); color: var(--accent-deep); }
+.pill.later { background: var(--line); color: var(--muted); }
+footer { padding-block: 36px; color: var(--muted); font-size: .86rem; }
+footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<nav class="nav" aria-label="Main">
+  <div class="wrap">
+    <a class="brand" href="#top">
+      <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="#ea580c"/><path d="M7 17c3-6 6 6 9 0s6 6 9 0" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>
+      agent<span>-</span>senses
+    </a>
+    <div class="links">
+      <a href="#why" data-i18n="nav.why"></a>
+      <a href="#senses" data-i18n="nav.senses"></a>
+      <a href="#how" data-i18n="nav.how"></a>
+      <a href="#code" data-i18n="nav.code"></a>
+      <a href="#terminal" data-i18n="nav.term"></a>
+      <a href="#safety" data-i18n="nav.safety"></a>
+      <a href="#install" data-i18n="nav.install"></a>
+    </div>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" data-lang="en">EN</button>
+      <button type="button" data-lang="da">DA</button>
+      <button type="button" data-lang="es">ES</button>
+      <button type="button" data-lang="zh">中文</button>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <div>
+      <div class="eyebrow" data-i18n="hero.eyebrow"></div>
+      <h1 data-i18n="hero.title"></h1>
+      <p class="lead" data-i18n="hero.lead"></p>
+      <div class="cta">
+        <a class="btn primary" href="#install" data-i18n="hero.cta1"></a>
+        <a class="btn" href="https://github.com/netsi1964/netsi-agent-senses" target="_blank" rel="noopener">GitHub ↗</a>
+        <a class="btn" href="../">Slides →</a>
+      </div>
+      <div class="tagrow">
+        <span class="tag">Claude Code plugin</span><span class="tag">Deno + TypeScript</span><span class="tag">MCP</span><span class="tag" data-i18n="hero.tag1"></span><span class="tag">Apache-2.0</span>
+      </div>
+    </div>
+    <div class="term" aria-label="Simulated Claude Code session">
+      <div class="term-bar"><i></i><i></i><i></i><b>~/code/my-app — claude --plugin-dir ~/netsi-agent-senses</b></div>
+      <pre id="heroLog" aria-live="off"></pre>
+      <div class="statusline" id="heroStatus"></div>
+    </div>
+  </div>
+</header>
+
+<main>
+<section id="why">
+  <div class="wrap">
+    <div class="head">
+      <div class="eyebrow" data-i18n="why.eyebrow"></div>
+      <h2 data-i18n="why.title"></h2>
+      <p class="lead" data-i18n="why.lead"></p>
+    </div>
+    <div class="grid4">
+      <div class="prob"><b data-i18n="why.p1t"></b><p data-i18n="why.p1"></p></div>
+      <div class="prob"><b data-i18n="why.p2t"></b><p data-i18n="why.p2"></p></div>
+      <div class="prob"><b data-i18n="why.p3t"></b><p data-i18n="why.p3"></p></div>
+      <div class="prob"><b data-i18n="why.p4t"></b><p data-i18n="why.p4"></p></div>
+    </div>
+  </div>
+</section>
+
+<section id="senses" class="alt">
+  <div class="wrap">
+    <div class="head">
+      <div class="eyebrow" data-i18n="senses.eyebrow"></div>
+      <h2 data-i18n="senses.title"></h2>
+      <p class="lead" data-i18n="senses.lead"></p>
+    </div>
+    <div class="grid5" id="senseCards"></div>
+    <div class="simnote">
+      <span data-i18n="senses.sim"></span>
+      <button type="button" class="btn" id="simToggle" style="height:32px;font-size:.82rem"></button>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <div class="head">
+      <div class="eyebrow" data-i18n="how.eyebrow"></div>
+      <h2 data-i18n="how.title"></h2>
+      <p class="lead" data-i18n="how.lead"></p>
+    </div>
+    <div class="flowbox">
+      <svg viewBox="0 0 960 300" role="img" aria-labelledby="flowTitle">
+        <title id="flowTitle">Claude Code hooks → adapter → events.jsonl → sensors → statusline, MCP, dashboard</title>
+        <text class="zone" x="20" y="24" data-i18n="how.z1"></text>
+        <text class="zone" x="360" y="24" data-i18n="how.z2"></text>
+        <text class="zone" x="770" y="24" data-i18n="how.z3"></text>
+        <path id="p1" class="path" d="M170 150 H210"/>
+        <path id="p2" class="path" d="M350 150 H390"/>
+        <path id="p3" class="path" d="M540 150 H580"/>
+        <path id="p4" class="path" d="M720 150 C 745 150, 745 70, 770 70"/>
+        <path id="p5" class="path" d="M720 150 H770"/>
+        <path id="p6" class="path" d="M720 150 C 745 150, 745 230, 770 230"/>
+        <g class="node"><rect x="20" y="96" width="150" height="108" rx="12"/><text x="36" y="124">Claude Code</text><text class="mono" x="36" y="146">PreToolUse</text><text class="mono" x="36" y="162">PostToolUse(Failure)</text><text class="mono" x="36" y="178">UserPromptSubmit · Stop</text><text class="mono" x="36" y="194">transcript</text></g>
+        <g class="node"><rect x="210" y="96" width="140" height="108" rx="12"/><text x="226" y="124">Adapter</text><text class="mono" x="226" y="146">adapters/claude-code</text><text class="mono" x="226" y="166">normalize.ts</text><text class="mono" x="226" y="186" data-i18n="how.n2"></text></g>
+        <g class="node core"><rect x="390" y="96" width="150" height="108" rx="12"/><text x="406" y="124">HarnessEvent</text><text class="mono" x="406" y="146">events.jsonl</text><text class="mono" x="406" y="166">tool · ok · exitCode</text><text class="mono" x="406" y="186">tokens · signals</text></g>
+        <g class="node core"><rect x="580" y="96" width="140" height="108" rx="12"/><text x="596" y="124" data-i18n="how.n4"></text><text class="mono" x="596" y="146">compute(events,</text><text class="mono" x="596" y="162">  config, now)</text><text class="mono" x="596" y="186">→ value 0..1</text></g>
+        <g class="node out"><rect x="770" y="42" width="170" height="56" rx="12"/><text x="786" y="66" data-i18n="how.o1"></text><text class="mono" x="786" y="84">pain 0.71! · ctx 0.42</text></g>
+        <g class="node out"><rect x="770" y="122" width="170" height="56" rx="12"/><text x="786" y="146" data-i18n="how.o2"></text><text class="mono" x="786" y="164">senses_read · senses_set</text></g>
+        <g class="node out"><rect x="770" y="202" width="170" height="56" rx="12"/><text x="786" y="226" data-i18n="how.o3"></text><text class="mono" x="786" y="244">127.0.0.1 · token · SSE</text></g>
+        <g id="pulses"></g>
+      </svg>
+    </div>
+    <div class="steps3">
+      <div><b data-i18n="how.s1t"></b><p data-i18n="how.s1"></p></div>
+      <div><b data-i18n="how.s2t"></b><p data-i18n="how.s2"></p></div>
+      <div><b data-i18n="how.s3t"></b><p data-i18n="how.s3"></p></div>
+    </div>
+  </div>
+</section>
+
+<section id="code" class="alt">
+  <div class="wrap">
+    <div class="head">
+      <div class="eyebrow" data-i18n="code.eyebrow"></div>
+      <h2 data-i18n="code.title"></h2>
+      <p class="lead" data-i18n="code.lead"></p>
+    </div>
+    <div class="codegrid">
+      <div class="term">
+        <div class="tabs" role="tablist" id="codeTabs"></div>
+        <pre id="codeView"></pre>
+        <div class="codenote" id="codeNote"></div>
+      </div>
+      <div class="lab">
+        <div><h3 data-i18n="lab.title"></h3><p style="color:var(--muted);font-size:.9rem;margin-top:4px" data-i18n="lab.lead"></p></div>
+        <div class="btns">
+          <button type="button" class="btn okb" id="labOk">✓ ok</button>
+          <button type="button" class="btn badb" id="labFail">✗ fail</button>
+          <button type="button" class="btn" id="labReset" data-i18n="lab.reset"></button>
+        </div>
+        <div class="chips" id="labChips" aria-live="polite"></div>
+        <div class="math" id="labMath"></div>
+        <div class="meter" id="labMeter"><span>pain</span><div class="rail"><i></i><span class="t" style="left:60%"></span></div><b id="labVal">0.00</b></div>
+        <div class="labout" id="labOut"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="terminal">
+  <div class="wrap">
+    <div class="head">
+      <div class="eyebrow" data-i18n="term.eyebrow"></div>
+      <h2 data-i18n="term.title"></h2>
+      <p class="lead" data-i18n="term.lead"></p>
+    </div>
+    <div class="player">
+      <div class="scenes" role="group" id="sceneBtns">
+        <button type="button" class="scene-btn" data-scene="install" data-i18n="term.sc1"></button>
+        <button type="button" class="scene-btn" data-scene="senses" data-i18n="term.sc2"></button>
+        <button type="button" class="scene-btn" data-scene="tune" data-i18n="term.sc3"></button>
+        <button type="button" class="scene-btn" data-scene="files" data-i18n="term.sc4"></button>
+      </div>
+      <div class="term">
+        <div class="term-bar"><i></i><i></i><i></i><b id="playerTitle"></b></div>
+        <pre id="playerOut"></pre>
+      </div>
+      <div class="ctrl"><span id="playerCaption"></span><button type="button" class="btn" id="replay" data-i18n="term.replay" style="height:34px"></button></div>
+    </div>
+  </div>
+</section>
+
+<section id="safety" class="alt">
+  <div class="wrap">
+    <div class="head">
+      <div class="eyebrow" data-i18n="safe.eyebrow"></div>
+      <h2 data-i18n="safe.title"></h2>
+      <p class="lead" data-i18n="safe.lead"></p>
+    </div>
+    <div class="safe">
+      <div class="card">
+        <h3 data-i18n="safe.t1"></h3>
+        <div class="tbl"><table>
+          <thead><tr><th data-i18n="safe.field"></th><th data-i18n="safe.human"></th><th data-i18n="safe.agent"></th></tr></thead>
+          <tbody>
+            <tr><td class="mono">gain</td><td class="yes">✓ <span data-i18n="safe.yes"></span></td><td class="yes">✓ <span data-i18n="safe.inb"></span></td></tr>
+            <tr><td class="mono">threshold</td><td class="yes">✓ <span data-i18n="safe.yes"></span></td><td class="yes">✓ <span data-i18n="safe.inb"></span></td></tr>
+            <tr><td class="mono">window</td><td class="yes">✓ <span data-i18n="safe.yes"></span></td><td class="yes">✓ <span data-i18n="safe.inb"></span></td></tr>
+            <tr><td class="mono">enabled</td><td class="yes">✓ <span data-i18n="safe.yes"></span></td><td class="no">✗ <span data-i18n="safe.never"></span></td></tr>
+            <tr><td class="mono">bounds</td><td class="yes">✓ <span data-i18n="safe.yes"></span></td><td class="no">✗ <span data-i18n="safe.never"></span></td></tr>
+            <tr><td class="mono">action</td><td class="yes">✓ <span data-i18n="safe.yes"></span></td><td class="no">✗ <span data-i18n="safe.never"></span></td></tr>
+          </tbody>
+        </table></div>
+        <ul class="plain">
+          <li data-i18n="safe.b1"></li>
+          <li data-i18n="safe.b2"></li>
+          <li data-i18n="safe.b3"></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 data-i18n="safe.t2"></h3>
+        <div class="tbl"><table>
+          <thead><tr><th>sense</th><th class="mono">threshold</th><th class="mono">bounds</th><th class="mono">window</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">pain</td><td>0.60</td><td>0.40–0.85</td><td>300 s</td></tr>
+            <tr><td class="mono">interoception</td><td>0.80</td><td>0.65–0.90</td><td>3600 s</td></tr>
+            <tr><td class="mono">time</td><td>0.75</td><td>0.50–0.90</td><td>7200 s</td></tr>
+            <tr><td class="mono">smell</td><td>0.50</td><td>0.30–0.80</td><td>900 s</td></tr>
+            <tr><td class="mono">gut</td><td>0.60</td><td>–</td><td>–</td></tr>
+          </tbody>
+        </table></div>
+        <p style="color:var(--muted);font-size:.9rem" data-i18n="safe.t2n"></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <div class="head">
+      <div class="eyebrow" data-i18n="inst.eyebrow"></div>
+      <h2 data-i18n="inst.title"></h2>
+      <div class="req"><span class="tag">Claude Code</span><span class="tag">Deno 2.x</span><span class="tag" data-i18n="inst.nobuild"></span></div>
+    </div>
+    <div class="install">
+      <div class="step"><div class="num">1</div><div class="body"><h3 data-i18n="inst.s1t"></h3>
+        <div class="snip"><pre>git clone https://github.com/netsi1964/netsi-agent-senses.git ~/netsi-agent-senses</pre><button type="button" class="copy" data-i18n="inst.copy"></button></div></div></div>
+      <div class="step"><div class="num">2</div><div class="body"><h3 data-i18n="inst.s2t"></h3><p data-i18n="inst.s2"></p>
+        <div class="snip"><pre>cd ~/code/my-app
+claude --plugin-dir ~/netsi-agent-senses
+echo ".netsi-agent-senses/" >> .gitignore</pre><button type="button" class="copy" data-i18n="inst.copy"></button></div></div></div>
+      <div class="step"><div class="num">3</div><div class="body"><h3 data-i18n="inst.s3t"></h3><p data-i18n="inst.s3"></p>
+        <div class="snip"><pre>/senses</pre><button type="button" class="copy" data-i18n="inst.copy"></button></div></div></div>
+      <div class="step"><div class="num">4</div><div class="body"><h3 data-i18n="inst.s4t"></h3><p data-i18n="inst.s4"></p>
+        <div class="snip"><pre>{
+  "statusLine": {
+    "type": "command",
+    "command": "~/netsi-agent-senses/bin/netsi-senses-statusline"
+  }
+}</pre><button type="button" class="copy" data-i18n="inst.copy"></button></div></div></div>
+    </div>
+    <div class="card" style="margin-top:28px">
+      <h3 data-i18n="inst.offt"></h3>
+      <div class="tbl"><table>
+        <tbody>
+          <tr><td data-i18n="inst.off1"></td><td style="white-space:normal" data-i18n="inst.off1v"></td></tr>
+          <tr><td data-i18n="inst.off2"></td><td style="white-space:normal" data-i18n="inst.off2v"></td></tr>
+          <tr><td data-i18n="inst.off3"></td><td class="mono" style="white-space:normal">rm -rf .netsi-agent-senses ~/netsi-agent-senses</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+</section>
+
+<section id="status" class="alt">
+  <div class="wrap">
+    <div class="head">
+      <div class="eyebrow" data-i18n="st.eyebrow"></div>
+      <h2 data-i18n="st.title"></h2>
+    </div>
+    <div class="status">
+      <div class="card"><span class="pill done" data-i18n="st.p1"></span><p data-i18n="st.c1"></p></div>
+      <div class="card"><span class="pill next" data-i18n="st.p2"></span><p data-i18n="st.c2"></p></div>
+      <div class="card"><span class="pill later" data-i18n="st.p3"></span><p data-i18n="st.c3"></p></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>netsi-agent-senses · Apache-2.0 · <a href="https://netsi.dk" target="_blank" rel="noopener">netsi.dk</a></span>
+    <span data-i18n="foot"></span>
+  </div>
+</footer>
+
+<script>
+/* ================= i18n ================= */
+const T = {
+en: {
+  "nav.why":"Why","nav.senses":"Senses","nav.how":"How it works","nav.code":"Code","nav.term":"Terminal","nav.safety":"Safety","nav.install":"Install",
+  "hero.eyebrow":"For developers who work with AI agents",
+  "hero.title":"Give your coding agent a <em>feel</em> for its own state",
+  "hero.lead":"netsi-agent-senses adds pain, interoception, a sense of time, smell and a gut feeling to Claude Code. They are measured from what the agent actually does, and both you and the agent can read them.",
+  "hero.cta1":"Install in 5 minutes","hero.tag1":"no runtime dependencies",
+  "why.eyebrow":"The problem","why.title":"You notice it too late",
+  "why.lead":"An agent has no overall picture of its own state. These four situations usually go unnoticed until the work is already worse.",
+  "why.p1t":"Failure loops","why.p1":"Five failed tool calls in a row, and the agent just tries again.",
+  "why.p2t":"A full context","why.p2":"The context window is almost full and answers get worse.",
+  "why.p3t":"Unattended sessions","why.p3":"The session has run for three hours without a word from you.",
+  "why.p4t":"Rising problems","why.p4":"The linter and type checker report more problems with every run.",
+  "senses.eyebrow":"The five senses","senses.title":"Every reading is a number from 0 to 1, with a confidence",
+  "senses.lead":"Missing data gives low confidence. The system never invents a value. When a reading reaches its threshold, the card says so in words, not only in colour.",
+  "senses.sim":"Simulated session, driven by the same formulas as the plugin.","sim.pause":"Pause","sim.play":"Play",
+  "s.pain.h":"Pain","s.pain.w":"Share of failed tool calls, weighted towards failures in a row.",
+  "s.interoception.h":"Inner awareness","s.interoception.w":"Context window in use divided by window size.",
+  "s.time.h":"Sense of time","s.time.w":"Session length and time since you last wrote.",
+  "s.smell.h":"Smell","s.smell.w":"Problems from the linters and type checkers the agent runs.",
+  "s.gut.h":"Gut feeling","s.gut.w":"Weighted average of the other four senses.",
+  "state.over":"over threshold","state.ok":"below threshold","state.none":"no data yet","conf":"confidence",
+  "how.eyebrow":"Architecture","how.title":"From hook to number in four steps",
+  "how.lead":"Only the adapter knows Claude Code. Everything after it reads one normalised event format, so Codex can be added later without touching the sensors.",
+  "how.z1":"harness","how.z2":"core (harness-agnostic)","how.z3":"outputs","how.n2":"metadata only","how.n4":"Sensors","how.o1":"Status line","how.o2":"MCP server","how.o3":"Dashboard",
+  "how.s1t":"Hooks record metadata","how.s1":"Tool name, success, exit code and token counts. Never prompts, code or tool output.",
+  "how.s2t":"Sensors are pure functions","how.s2":"No I/O and no clock reads. <code>now</code> is passed in, so every sensor is trivial to unit test.",
+  "how.s3t":"One picture, three views","how.s3":"The same readings feed your status line, the agent's MCP tools and a local dashboard.",
+  "code.eyebrow":"Code","code.title":"This is the real code",
+  "code.lead":"Excerpts from the repo. The event format is the contract between harness and core. A sensor is an object with a <code>compute</code> function.",
+  "code.n.event":"Every adapter turns its native payloads into this shape. Unknown fields are dropped, so nothing unvetted is stored.",
+  "code.n.sensor":"The sensor contract. <code>read()</code> clamps the value and decides <code>triggered</code>, so a sensor cannot lie about its threshold.",
+  "code.n.pain":"60% failure rate plus 40% streak. Three failures in a row put the streak part at full strength. The highlighted lines run live in the lab on the right.",
+  "lab.title":"Pain lab","lab.lead":"Add tool results and watch the pain sensor compute, line by line.","lab.reset":"Reset",
+  "lab.rate":"rate","lab.streak":"streak","lab.raw":"raw",
+  "term.eyebrow":"In the terminal","term.title":"What it looks like while you work",
+  "term.lead":"Four short recordings. Pick one, or let them play.",
+  "term.sc1":"Install and start","term.sc2":"/senses","term.sc3":"Agent tunes itself","term.sc4":"Files on disk","term.replay":"Replay",
+  "cap.install":"Clone, start Claude Code with the plugin, and keep runtime data out of git.",
+  "cap.senses":"The /senses command calls the MCP tool and starts the dashboard.",
+  "cap.tune":"The agent may move gain, threshold and window inside your bounds. Anything else is refused and logged.",
+  "cap.files":"Plain JSONL and JSON in your project. No database, no cloud.",
+  "c.clone":"# 1. get the plugin","c.start":"# 2. start Claude Code in your own project","c.ignore":"# 3. runtime data stays out of git",
+  "c.loaded":"# hooks, MCP server, /senses and the skill are now loaded",
+  "c.off":"# the agent tries to switch pain off","c.wide":"# then tries a threshold outside your bounds","c.okt":"# a change inside the bounds is accepted","c.audit":"# and it is written to the audit log",
+  "c.ev":"# one line per event, metadata only","c.cfg":"# your settings, edited live by you or the dashboard",
+  "safe.eyebrow":"Safety model","safe.title":"The agent can tune its senses but never blind itself",
+  "safe.lead":"These rules are enforced in code and covered by tests. Every change and every refusal is written to the audit log with actor, reason, from and to.",
+  "safe.t1":"Who may change what","safe.field":"Field","safe.human":"You","safe.agent":"Agent via MCP","safe.yes":"yes","safe.inb":"within bounds","safe.never":"never",
+  "safe.b1":"The dashboard binds to 127.0.0.1 only and needs a random token.","safe.b2":"Text injected into the agent's context is short and structured, never raw log text.","safe.b3":"An invalid config file is ignored in favour of the last valid one.",
+  "safe.t2":"Shipped defaults","safe.t2n":"The bounds are narrow on purpose. Widen them in the dashboard if you want to give the agent more room.",
+  "inst.eyebrow":"Installation","inst.title":"Up and running in 5 minutes","inst.nobuild":"no build step","inst.copy":"Copy","inst.copied":"Copied",
+  "inst.s1t":"Get the plugin",
+  "inst.s2t":"Start Claude Code with it","inst.s2":"Run this in the project you work on. Data is written to <code>.netsi-agent-senses/</code> in that project.",
+  "inst.s3t":"Look at your senses","inst.s3":"Type this in Claude Code. You get a table and a link to the dashboard.",
+  "inst.s4t":"Optional: the status line","inst.s4":"Plugins cannot set a status line, so add it to <code>~/.claude/settings.json</code>. It also gives <code>interoception</code> the exact window size.",
+  "inst.offt":"Disable or remove","inst.off1":"One sense","inst.off1v":"Untick it in the dashboard, or set <code>\"enabled\": false</code> in <code>senses.json</code>. Only you can do this.","inst.off2":"Pause the plugin","inst.off2v":"Start Claude Code without <code>--plugin-dir</code>.","inst.off3":"Remove everything",
+  "st.eyebrow":"Status","st.title":"Alpha, and honest about it",
+  "st.p1":"WORKS NOW","st.c1":"Four senses and gut, MCP server, hooks, status line, dashboard and audit log.",
+  "st.p2":"NEXT","st.c2":"Interventions beyond informing: warn, block and influence (PRD-FEAT-008). Today the plugin gives you overview and lets the agent react. It does not step in by itself.",
+  "st.p3":"LATER","st.c3":"Codex support (phase 2) and more senses (phase 3) on the same event format.",
+  "foot":"Agent and human see the same picture."
+},
+da: {
+  "nav.why":"Hvorfor","nav.senses":"Sanser","nav.how":"Sådan virker det","nav.code":"Kode","nav.term":"Terminal","nav.safety":"Sikkerhed","nav.install":"Installation",
+  "hero.eyebrow":"Til udviklere, der arbejder med AI-agenter",
+  "hero.title":"Giv din kodeagent en <em>fornemmelse</em> af sin egen tilstand",
+  "hero.lead":"netsi-agent-senses giver Claude Code smerte, interoception, tidssans, lugtesans og mavefornemmelse. De måles ud fra det, agenten faktisk gør, og både du og agenten kan læse dem.",
+  "hero.cta1":"Installér på 5 minutter","hero.tag1":"ingen runtime-afhængigheder",
+  "why.eyebrow":"Problemet","why.title":"Du opdager det for sent",
+  "why.lead":"En agent har ikke noget samlet billede af sin egen tilstand. De her fire situationer bliver typisk først opdaget, når arbejdet allerede er blevet dårligere.",
+  "why.p1t":"Fejl-loops","why.p1":"Fem fejlede tool-kald i træk, og agenten prøver bare igen.",
+  "why.p2t":"Fuld context","why.p2":"Context-vinduet er næsten fyldt, og svarene bliver dårligere.",
+  "why.p3t":"Sessioner uden opsyn","why.p3":"Sessionen har kørt i tre timer, uden at du har skrevet noget.",
+  "why.p4t":"Stigende problemer","why.p4":"Linter og type-checker melder flere problemer for hver kørsel.",
+  "senses.eyebrow":"De fem sanser","senses.title":"Hver måling er et tal fra 0 til 1 med en confidence",
+  "senses.lead":"Mangler der data, er confidence lav. Systemet opfinder aldrig en værdi. Når en måling når sin tærskel, står det på kortet med ord, ikke kun med farve.",
+  "senses.sim":"Simuleret session, drevet af de samme formler som pluginet.","sim.pause":"Pause","sim.play":"Afspil",
+  "s.pain.h":"Smerte","s.pain.w":"Andel fejlede tool-kald, vægtet mod fejl i træk.",
+  "s.interoception.h":"Indre bevidsthed","s.interoception.w":"Brugt context-vindue divideret med vinduets størrelse.",
+  "s.time.h":"Tidssans","s.time.w":"Sessionens længde og tid siden du sidst skrev.",
+  "s.smell.h":"Lugtesans","s.smell.w":"Problemer fra de linters og type-checkers, agenten kører.",
+  "s.gut.h":"Mavefornemmelse","s.gut.w":"Vægtet gennemsnit af de fire andre sanser.",
+  "state.over":"over tærskel","state.ok":"under tærskel","state.none":"ingen data endnu","conf":"confidence",
+  "how.eyebrow":"Arkitektur","how.title":"Fra hook til tal i fire trin",
+  "how.lead":"Kun adapteren kender Claude Code. Alt efter den læser ét normaliseret hændelsesformat, så Codex kan tilføjes senere uden at røre sensorerne.",
+  "how.z1":"harness","how.z2":"kerne (harness-uafhængig)","how.z3":"output","how.n2":"kun metadata","how.n4":"Sensorer","how.o1":"Statuslinje","how.o2":"MCP-server","how.o3":"Dashboard",
+  "how.s1t":"Hooks gemmer metadata","how.s1":"Tool-navn, om kaldet lykkedes, exit code og antal tokens. Aldrig prompts, kode eller tool-output.",
+  "how.s2t":"Sensorer er rene funktioner","how.s2":"Ingen I/O og ingen læsning af uret. <code>now</code> sendes ind, så hver sensor er nem at unit-teste.",
+  "how.s3t":"Ét billede, tre visninger","how.s3":"De samme målinger går til din statuslinje, agentens MCP-værktøjer og et lokalt dashboard.",
+  "code.eyebrow":"Kode","code.title":"Det her er den rigtige kode",
+  "code.lead":"Uddrag fra repoet. Hændelsesformatet er kontrakten mellem harness og kerne. En sensor er et objekt med en <code>compute</code>-funktion.",
+  "code.n.event":"Hver adapter omdanner sine egne payloads til denne form. Ukendte felter smides væk, så intet ukontrolleret bliver gemt.",
+  "code.n.sensor":"Sensor-kontrakten. <code>read()</code> begrænser værdien og afgør <code>triggered</code>, så en sensor ikke kan snyde med sin tærskel.",
+  "code.n.pain":"60 % fejlrate plus 40 % stime. Tre fejl i træk giver stime-delen fuld styrke. De fremhævede linjer kører live i laboratoriet til højre.",
+  "lab.title":"Smerte-laboratorium","lab.lead":"Tilføj tool-resultater og se pain-sensoren regne, linje for linje.","lab.reset":"Nulstil",
+  "lab.rate":"rate","lab.streak":"stime","lab.raw":"rå",
+  "term.eyebrow":"I terminalen","term.title":"Sådan ser det ud, mens du arbejder",
+  "term.lead":"Fire korte optagelser. Vælg én, eller lad dem køre.",
+  "term.sc1":"Installér og start","term.sc2":"/senses","term.sc3":"Agenten justerer sig selv","term.sc4":"Filer på disken","term.replay":"Afspil igen",
+  "cap.install":"Klon, start Claude Code med pluginet, og hold runtime-data ude af git.",
+  "cap.senses":"Kommandoen /senses kalder MCP-værktøjet og starter dashboardet.",
+  "cap.tune":"Agenten må flytte gain, threshold og window inden for dine grænser. Alt andet bliver afvist og logget.",
+  "cap.files":"Almindelig JSONL og JSON i dit projekt. Ingen database, ingen cloud.",
+  "c.clone":"# 1. hent pluginet","c.start":"# 2. start Claude Code i dit eget projekt","c.ignore":"# 3. runtime-data holdes ude af git",
+  "c.loaded":"# hooks, MCP-server, /senses og skill er nu indlæst",
+  "c.off":"# agenten prøver at slukke for pain","c.wide":"# og prøver så en tærskel uden for dine grænser","c.okt":"# en ændring inden for grænserne bliver accepteret","c.audit":"# og skrevet i audit-loggen",
+  "c.ev":"# én linje pr. hændelse, kun metadata","c.cfg":"# dine indstillinger, rettes live af dig eller dashboardet",
+  "safe.eyebrow":"Sikkerhedsmodel","safe.title":"Agenten kan justere sine sanser, men aldrig gøre sig selv blind",
+  "safe.lead":"Reglerne håndhæves i koden og er dækket af tests. Hver ændring og hver afvisning skrives i audit-loggen med aktør, begrundelse, fra og til.",
+  "safe.t1":"Hvem må ændre hvad","safe.field":"Felt","safe.human":"Dig","safe.agent":"Agent via MCP","safe.yes":"ja","safe.inb":"inden for grænser","safe.never":"aldrig",
+  "safe.b1":"Dashboardet lytter kun på 127.0.0.1 og kræver et tilfældigt token.","safe.b2":"Tekst, der sendes ind i agentens context, er kort og struktureret, aldrig rå logtekst.","safe.b3":"En ugyldig config-fil ignoreres til fordel for den sidste gyldige.",
+  "safe.t2":"Standardværdier","safe.t2n":"Grænserne er smalle med vilje. Gør dem bredere i dashboardet, hvis du vil give agenten mere spillerum.",
+  "inst.eyebrow":"Installation","inst.title":"Kørende på 5 minutter","inst.nobuild":"intet build-trin","inst.copy":"Kopiér","inst.copied":"Kopieret",
+  "inst.s1t":"Hent pluginet",
+  "inst.s2t":"Start Claude Code med det","inst.s2":"Kør det i det projekt, du arbejder i. Data skrives til <code>.netsi-agent-senses/</code> i projektet.",
+  "inst.s3t":"Se dine sanser","inst.s3":"Skriv det i Claude Code. Du får en tabel og et link til dashboardet.",
+  "inst.s4t":"Valgfrit: statuslinjen","inst.s4":"Plugins kan ikke sætte en statuslinje, så tilføj den i <code>~/.claude/settings.json</code>. Den giver også <code>interoception</code> den præcise vinduesstørrelse.",
+  "inst.offt":"Slå fra eller fjern","inst.off1":"Én sans","inst.off1v":"Fjern fluebenet i dashboardet, eller sæt <code>\"enabled\": false</code> i <code>senses.json</code>. Kun du kan gøre det.","inst.off2":"Sæt pluginet på pause","inst.off2v":"Start Claude Code uden <code>--plugin-dir</code>.","inst.off3":"Fjern det hele",
+  "st.eyebrow":"Status","st.title":"Alpha, og ærlig om det",
+  "st.p1":"VIRKER NU","st.c1":"Fire sanser og gut, MCP-server, hooks, statuslinje, dashboard og audit-log.",
+  "st.p2":"NÆSTE","st.c2":"Indgreb ud over at informere: warn, block og influence (PRD-FEAT-008). I dag giver pluginet dig overblik og lader agenten reagere. Det griber ikke selv ind.",
+  "st.p3":"SENERE","st.c3":"Understøttelse af Codex (fase 2) og flere sanser (fase 3) på samme hændelsesformat.",
+  "foot":"Agent og menneske ser det samme billede."
+},
+es: {
+  "nav.why":"Por qué","nav.senses":"Sentidos","nav.how":"Cómo funciona","nav.code":"Código","nav.term":"Terminal","nav.safety":"Seguridad","nav.install":"Instalación",
+  "hero.eyebrow":"Para desarrolladores que trabajan con agentes de IA",
+  "hero.title":"Dale a tu agente de código una <em>percepción</em> de su propio estado",
+  "hero.lead":"netsi-agent-senses añade a Claude Code dolor, interocepción, sentido del tiempo, olfato e intuición. Se miden a partir de lo que el agente hace realmente, y tanto tú como el agente podéis leerlos.",
+  "hero.cta1":"Instalar en 5 minutos","hero.tag1":"sin dependencias en tiempo de ejecución",
+  "why.eyebrow":"El problema","why.title":"Te das cuenta demasiado tarde",
+  "why.lead":"Un agente no tiene una visión de conjunto de su propio estado. Estas cuatro situaciones suelen pasar desapercibidas hasta que el trabajo ya ha empeorado.",
+  "why.p1t":"Bucles de errores","why.p1":"Cinco llamadas a herramientas fallidas seguidas, y el agente vuelve a intentarlo.",
+  "why.p2t":"Contexto lleno","why.p2":"La ventana de contexto está casi llena y las respuestas empeoran.",
+  "why.p3t":"Sesiones sin supervisión","why.p3":"La sesión lleva tres horas sin que escribas nada.",
+  "why.p4t":"Problemas en aumento","why.p4":"El linter y el comprobador de tipos informan de más problemas en cada ejecución.",
+  "senses.eyebrow":"Los cinco sentidos","senses.title":"Cada lectura es un número de 0 a 1, con una confianza",
+  "senses.lead":"Si faltan datos, la confianza es baja. El sistema nunca inventa un valor. Cuando una lectura alcanza su umbral, la tarjeta lo dice con palabras, no solo con color.",
+  "senses.sim":"Sesión simulada, con las mismas fórmulas que el plugin.","sim.pause":"Pausa","sim.play":"Reproducir",
+  "s.pain.h":"Dolor","s.pain.w":"Proporción de llamadas fallidas, con más peso para los fallos seguidos.",
+  "s.interoception.h":"Conciencia interna","s.interoception.w":"Ventana de contexto usada dividida por su tamaño.",
+  "s.time.h":"Sentido del tiempo","s.time.w":"Duración de la sesión y tiempo desde tu último mensaje.",
+  "s.smell.h":"Olfato","s.smell.w":"Problemas de los linters y comprobadores de tipos que ejecuta el agente.",
+  "s.gut.h":"Intuición","s.gut.w":"Media ponderada de los otros cuatro sentidos.",
+  "state.over":"sobre el umbral","state.ok":"bajo el umbral","state.none":"aún sin datos","conf":"confianza",
+  "how.eyebrow":"Arquitectura","how.title":"Del hook al número en cuatro pasos",
+  "how.lead":"Solo el adaptador conoce Claude Code. Todo lo demás lee un único formato de eventos normalizado, así que Codex se podrá añadir sin tocar los sensores.",
+  "how.z1":"harness","how.z2":"núcleo (independiente del harness)","how.z3":"salidas","how.n2":"solo metadatos","how.n4":"Sensores","how.o1":"Línea de estado","how.o2":"Servidor MCP","how.o3":"Panel",
+  "how.s1t":"Los hooks registran metadatos","how.s1":"Nombre de la herramienta, éxito, código de salida y tokens. Nunca prompts, código ni salida de herramientas.",
+  "how.s2t":"Los sensores son funciones puras","how.s2":"Sin E/S y sin leer el reloj. <code>now</code> se pasa como parámetro, así que cada sensor es fácil de probar.",
+  "how.s3t":"Una imagen, tres vistas","how.s3":"Las mismas lecturas alimentan tu línea de estado, las herramientas MCP del agente y un panel local.",
+  "code.eyebrow":"Código","code.title":"Este es el código real",
+  "code.lead":"Fragmentos del repositorio. El formato de eventos es el contrato entre harness y núcleo. Un sensor es un objeto con una función <code>compute</code>.",
+  "code.n.event":"Cada adaptador convierte sus payloads nativos a esta forma. Los campos desconocidos se descartan, así que no se guarda nada sin validar.",
+  "code.n.sensor":"El contrato del sensor. <code>read()</code> limita el valor y decide <code>triggered</code>, así un sensor no puede mentir sobre su umbral.",
+  "code.n.pain":"60 % tasa de fallos más 40 % racha. Tres fallos seguidos dan a la racha toda su fuerza. Las líneas resaltadas se ejecutan en vivo en el laboratorio de la derecha.",
+  "lab.title":"Laboratorio de dolor","lab.lead":"Añade resultados y mira cómo calcula el sensor pain, línea a línea.","lab.reset":"Reiniciar",
+  "lab.rate":"tasa","lab.streak":"racha","lab.raw":"bruto",
+  "term.eyebrow":"En la terminal","term.title":"Así se ve mientras trabajas",
+  "term.lead":"Cuatro grabaciones cortas. Elige una o déjalas correr.",
+  "term.sc1":"Instalar e iniciar","term.sc2":"/senses","term.sc3":"El agente se ajusta","term.sc4":"Archivos en disco","term.replay":"Repetir",
+  "cap.install":"Clona, inicia Claude Code con el plugin y deja los datos fuera de git.",
+  "cap.senses":"El comando /senses llama a la herramienta MCP e inicia el panel.",
+  "cap.tune":"El agente puede mover gain, threshold y window dentro de tus límites. Todo lo demás se rechaza y se registra.",
+  "cap.files":"JSONL y JSON en tu proyecto. Sin base de datos, sin nube.",
+  "c.clone":"# 1. descarga el plugin","c.start":"# 2. inicia Claude Code en tu proyecto","c.ignore":"# 3. los datos quedan fuera de git",
+  "c.loaded":"# hooks, servidor MCP, /senses y la skill ya están cargados",
+  "c.off":"# el agente intenta apagar pain","c.wide":"# luego prueba un umbral fuera de tus límites","c.okt":"# un cambio dentro de los límites se acepta","c.audit":"# y queda en el registro de auditoría",
+  "c.ev":"# una línea por evento, solo metadatos","c.cfg":"# tu configuración, editable en vivo por ti o el panel",
+  "safe.eyebrow":"Modelo de seguridad","safe.title":"El agente puede ajustar sus sentidos, pero nunca cegarse",
+  "safe.lead":"Estas reglas se aplican en el código y están cubiertas por tests. Cada cambio y cada rechazo se registra con actor, motivo, desde y hasta.",
+  "safe.t1":"Quién puede cambiar qué","safe.field":"Campo","safe.human":"Tú","safe.agent":"Agente vía MCP","safe.yes":"sí","safe.inb":"dentro de límites","safe.never":"nunca",
+  "safe.b1":"El panel solo escucha en 127.0.0.1 y requiere un token aleatorio.","safe.b2":"El texto que entra en el contexto del agente es breve y estructurado, nunca texto de log en bruto.","safe.b3":"Un archivo de configuración no válido se ignora y se usa el último válido.",
+  "safe.t2":"Valores por defecto","safe.t2n":"Los límites son estrechos a propósito. Amplíalos en el panel si quieres dar más margen al agente.",
+  "inst.eyebrow":"Instalación","inst.title":"Funcionando en 5 minutos","inst.nobuild":"sin paso de build","inst.copy":"Copiar","inst.copied":"Copiado",
+  "inst.s1t":"Descarga el plugin",
+  "inst.s2t":"Inicia Claude Code con él","inst.s2":"Ejecútalo en el proyecto en el que trabajas. Los datos se guardan en <code>.netsi-agent-senses/</code> dentro del proyecto.",
+  "inst.s3t":"Mira tus sentidos","inst.s3":"Escríbelo en Claude Code. Obtienes una tabla y un enlace al panel.",
+  "inst.s4t":"Opcional: la línea de estado","inst.s4":"Los plugins no pueden definir una línea de estado, así que añádela en <code>~/.claude/settings.json</code>. También da a <code>interoception</code> el tamaño exacto de la ventana.",
+  "inst.offt":"Desactivar o eliminar","inst.off1":"Un sentido","inst.off1v":"Desmárcalo en el panel o pon <code>\"enabled\": false</code> en <code>senses.json</code>. Solo tú puedes hacerlo.","inst.off2":"Pausar el plugin","inst.off2v":"Inicia Claude Code sin <code>--plugin-dir</code>.","inst.off3":"Eliminar todo",
+  "st.eyebrow":"Estado","st.title":"Alfa, y lo decimos claro",
+  "st.p1":"FUNCIONA YA","st.c1":"Cuatro sentidos y gut, servidor MCP, hooks, línea de estado, panel y registro de auditoría.",
+  "st.p2":"PRÓXIMO","st.c2":"Intervenciones más allá de informar: warn, block e influence (PRD-FEAT-008). Hoy el plugin te da visión de conjunto y deja que el agente reaccione. No interviene por sí solo.",
+  "st.p3":"MÁS ADELANTE","st.c3":"Soporte para Codex (fase 2) y más sentidos (fase 3) sobre el mismo formato de eventos.",
+  "foot":"Agente y humano ven la misma imagen."
+},
+zh: {
+  "nav.why":"为什么","nav.senses":"感官","nav.how":"工作原理","nav.code":"代码","nav.term":"终端","nav.safety":"安全","nav.install":"安装",
+  "hero.eyebrow":"面向使用 AI 智能体的开发者",
+  "hero.title":"让你的编程智能体<em>感知</em>自身状态",
+  "hero.lead":"netsi-agent-senses 为 Claude Code 加入痛觉、内感受、时间感、嗅觉和直觉。它们根据智能体的实际行为来测量，你和智能体都能读取。",
+  "hero.cta1":"5 分钟完成安装","hero.tag1":"无运行时依赖",
+  "why.eyebrow":"问题","why.title":"等你发现时已经太晚",
+  "why.lead":"智能体对自身状态没有整体认识。下面四种情况通常要等到工作质量已经下降才会被注意到。",
+  "why.p1t":"失败循环","why.p1":"连续五次工具调用失败，智能体仍然继续重试。",
+  "why.p2t":"上下文将满","why.p2":"上下文窗口几乎占满，回答质量开始下降。",
+  "why.p3t":"无人看管的会话","why.p3":"会话已运行三个小时，你一句话也没写。",
+  "why.p4t":"问题不断增加","why.p4":"linter 和类型检查器每次运行报告的问题越来越多。",
+  "senses.eyebrow":"五种感官","senses.title":"每个读数都是 0 到 1 之间的数字，并带有置信度",
+  "senses.lead":"数据缺失时置信度低，系统从不编造数值。读数达到阈值时，卡片会用文字标明，而不只靠颜色。",
+  "senses.sim":"模拟会话，使用与插件相同的公式。","sim.pause":"暂停","sim.play":"播放",
+  "s.pain.h":"痛觉","s.pain.w":"失败工具调用的比例，连续失败权重更高。",
+  "s.interoception.h":"内感受","s.interoception.w":"已用上下文除以窗口大小。",
+  "s.time.h":"时间感","s.time.w":"会话时长，以及距你上次输入的时间。",
+  "s.smell.h":"嗅觉","s.smell.w":"智能体运行的 linter 和类型检查器报告的问题。",
+  "s.gut.h":"直觉","s.gut.w":"其他四种感官的加权平均值。",
+  "state.over":"超过阈值","state.ok":"低于阈值","state.none":"暂无数据","conf":"置信度",
+  "how.eyebrow":"架构","how.title":"从 hook 到数字，只需四步",
+  "how.lead":"只有适配器了解 Claude Code。之后的一切都读取统一的标准化事件格式，因此以后加入 Codex 无需改动传感器。",
+  "how.z1":"harness","how.z2":"核心（与 harness 无关）","how.z3":"输出","how.n2":"仅元数据","how.n4":"传感器","how.o1":"状态栏","how.o2":"MCP 服务器","how.o3":"仪表盘",
+  "how.s1t":"Hook 只记录元数据","how.s1":"工具名称、是否成功、退出码和 token 数。绝不记录提示词、代码或工具输出。",
+  "how.s2t":"传感器是纯函数","how.s2":"没有 I/O，也不读取时钟。<code>now</code> 作为参数传入，因此每个传感器都很容易做单元测试。",
+  "how.s3t":"一份数据，三种视图","how.s3":"同一组读数同时供给你的状态栏、智能体的 MCP 工具和本地仪表盘。",
+  "code.eyebrow":"代码","code.title":"这就是真实的代码",
+  "code.lead":"摘自仓库。事件格式是 harness 与核心之间的契约。传感器是一个带有 <code>compute</code> 函数的对象。",
+  "code.n.event":"每个适配器都把自身的原始数据转换成这个结构。未知字段会被丢弃，未经校验的内容不会被保存。",
+  "code.n.sensor":"传感器契约。<code>read()</code> 会截断数值并判断 <code>triggered</code>，传感器无法在阈值上作假。",
+  "code.n.pain":"60% 失败率加 40% 连续失败。连续三次失败时，连续部分达到满值。高亮的代码行在右侧实验室中实时运行。",
+  "lab.title":"痛觉实验室","lab.lead":"添加工具结果，逐行查看 pain 传感器如何计算。","lab.reset":"重置",
+  "lab.rate":"比例","lab.streak":"连续","lab.raw":"原始值",
+  "term.eyebrow":"在终端中","term.title":"你工作时看到的样子",
+  "term.lead":"四段简短录像。选择一段，或让它们自动播放。",
+  "term.sc1":"安装并启动","term.sc2":"/senses","term.sc3":"智能体自我调节","term.sc4":"磁盘上的文件","term.replay":"重播",
+  "cap.install":"克隆、带插件启动 Claude Code，并让运行数据不进入 git。",
+  "cap.senses":"/senses 命令调用 MCP 工具并启动仪表盘。",
+  "cap.tune":"智能体可以在你设定的范围内调整 gain、threshold 和 window。其他操作都会被拒绝并记录。",
+  "cap.files":"项目中的普通 JSONL 和 JSON 文件。没有数据库，也没有云服务。",
+  "c.clone":"# 1. 获取插件","c.start":"# 2. 在你的项目中启动 Claude Code","c.ignore":"# 3. 运行数据不进入 git",
+  "c.loaded":"# hooks、MCP 服务器、/senses 和 skill 已加载",
+  "c.off":"# 智能体试图关闭 pain","c.wide":"# 接着尝试超出范围的阈值","c.okt":"# 范围内的修改被接受","c.audit":"# 并写入审计日志",
+  "c.ev":"# 每个事件一行，仅元数据","c.cfg":"# 你的设置，可由你或仪表盘实时修改",
+  "safe.eyebrow":"安全模型","safe.title":"智能体可以调节感官，但永远无法让自己失明",
+  "safe.lead":"这些规则在代码中强制执行，并有测试覆盖。每次修改和每次拒绝都会写入审计日志，包含操作者、原因、修改前和修改后的值。",
+  "safe.t1":"谁可以修改什么","safe.field":"字段","safe.human":"你","safe.agent":"智能体（MCP）","safe.yes":"可以","safe.inb":"在范围内","safe.never":"永不",
+  "safe.b1":"仪表盘只监听 127.0.0.1，并需要随机 token。","safe.b2":"注入智能体上下文的文本简短且结构化，绝不包含原始日志文本。","safe.b3":"无效的配置文件会被忽略，继续使用上一个有效版本。",
+  "safe.t2":"默认设置","safe.t2n":"范围特意设得很窄。如果想给智能体更多空间，可以在仪表盘中放宽。",
+  "inst.eyebrow":"安装","inst.title":"5 分钟即可运行","inst.nobuild":"无需构建","inst.copy":"复制","inst.copied":"已复制",
+  "inst.s1t":"获取插件",
+  "inst.s2t":"带插件启动 Claude Code","inst.s2":"在你工作的项目中运行。数据写入该项目的 <code>.netsi-agent-senses/</code>。",
+  "inst.s3t":"查看你的感官","inst.s3":"在 Claude Code 中输入它，你会得到一张表格和仪表盘链接。",
+  "inst.s4t":"可选：状态栏","inst.s4":"插件无法设置状态栏，请把它加入 <code>~/.claude/settings.json</code>。它还会为 <code>interoception</code> 提供准确的窗口大小。",
+  "inst.offt":"停用或移除","inst.off1":"单个感官","inst.off1v":"在仪表盘中取消勾选，或在 <code>senses.json</code> 中设置 <code>\"enabled\": false</code>。只有你能这样做。","inst.off2":"暂停插件","inst.off2v":"启动 Claude Code 时不加 <code>--plugin-dir</code>。","inst.off3":"全部移除",
+  "st.eyebrow":"状态","st.title":"Alpha 阶段，坦诚说明",
+  "st.p1":"现已可用","st.c1":"四种感官和 gut、MCP 服务器、hooks、状态栏、仪表盘和审计日志。",
+  "st.p2":"下一步","st.c2":"超越提示的干预：warn、block 和 influence（PRD-FEAT-008）。目前插件提供概览并让智能体自行反应，不会主动介入。",
+  "st.p3":"以后","st.c3":"在同一事件格式上支持 Codex（第 2 阶段）和更多感官（第 3 阶段）。",
+  "foot":"智能体和人类看到同一幅画面。"
+}};
+const LANGS = ["en","da","es","zh"];
+let lang = "en";
+try { const s = localStorage.getItem("as-lang"); if (LANGS.includes(s)) lang = s; } catch (e) {}
+const t = (k) => (T[lang] && T[lang][k]) ?? T.en[k] ?? k;
+
+function applyLang() {
+  document.documentElement.lang = lang === "zh" ? "zh-Hans" : lang;
+  document.querySelectorAll("[data-i18n]").forEach((el) => { el.innerHTML = t(el.dataset.i18n); });
+  document.querySelectorAll("[data-lang]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
+  renderCards(); renderCode(); renderLab(); updateSimBtn();
+  playScene(currentScene, true);
+}
+document.querySelectorAll("[data-lang]").forEach((b) => b.addEventListener("click", () => {
+  lang = b.dataset.lang; try { localStorage.setItem("as-lang", lang); } catch (e) {}
+  applyLang();
+}));
+
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const esc = (s) => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const f2 = (n) => n.toFixed(2);
+
+/* ================= simulation (same formulas as src/core/sensors) ================= */
+const CFG = {
+  pain: { threshold: .6, w: 1.5 }, interoception: { threshold: .8, w: 1 },
+  time: { threshold: .75, w: .5 }, smell: { threshold: .5, w: 1 }, gut: { threshold: .6 },
+};
+const SIM = { results: [], tokens: 18000, limit: 200000, minutes: 3, idle: 0, lint: [], step: 0, running: !reduce };
+const SCRIPT = [ // a believable session: work, a failure spiral, recovery, lint run, compact
+  "ok","ok","lint:2","ok","ok","ok","fail","ok","ok","lint:3","ok","fail","fail","fail","fail","ok","ok","ok","lint:6",
+  "ok","ok","ok","prompt","ok","ok","lint:1","ok","ok","ok","ok","fail","ok","ok","compact","ok","lint:0","ok","ok"];
+const TOOLS = ["Read","Edit","Bash","Grep","Bash","Edit","Write","Bash"];
+
+function painOf(results) {
+  if (!results.length) return { value: 0, label: "no tool results in window", confidence: 0 };
+  const failed = results.filter((r) => !r).length;
+  let streak = 0; for (let i = results.length - 1; i >= 0 && !results[i]; i--) streak++;
+  const rate = failed / results.length;
+  const raw = .6 * rate + .4 * Math.min(streak / 3, 1);
+  return { value: Math.min(1, raw), label: `${failed} of ${results.length} calls failed${streak > 1 ? `, last ${streak} in a row` : ""}`, confidence: Math.min(results.length / 5, 1), rate, streak, failed, raw };
+}
+const k = (n) => `${Math.round(n / 1000)}k`;
+const dur = (m) => m < 60 ? `${Math.round(m)} min` : `${Math.floor(m / 60)} h${Math.round(m % 60) ? ` ${Math.round(m % 60)} min` : ""}`;
+function readings() {
+  const win = SIM.results.slice(-10);
+  const p = painOf(win);
+  const i = { value: SIM.tokens / SIM.limit, label: `${k(SIM.tokens)} of ${k(SIM.limit)} tokens`, confidence: 1 };
+  const tv = Math.min(1, .7 * (SIM.minutes / 120) + .3 * Math.min(SIM.idle / 30, 1));
+  const tm = { value: tv, label: `session ${dur(SIM.minutes)}, ${dur(SIM.idle)} since last prompt`, confidence: 1 };
+  const lastLint = SIM.lint.slice(-1)[0];
+  const sm = lastLint === undefined ? { value: 0, label: "no lint or checks in window", confidence: 0 }
+    : { value: Math.min(1, lastLint / 8), label: `${lastLint} lint/check signal${lastLint === 1 ? "" : "s"} in latest runs`, confidence: Math.min(SIM.lint.length / 2, 1) };
+  const r = { pain: p, interoception: i, time: tm, smell: sm };
+  let num = 0, den = 0;
+  for (const id of ["pain","interoception","time","smell"]) { const w = CFG[id].w * r[id].confidence; num += w * r[id].value; den += w; }
+  const gv = den ? num / den : 0;
+  const gc = den / (1.5 + 1 + .5 + 1);
+  r.gut = { value: gv, label: `weighted mean of 4 senses${gc < .5 ? " (low confidence)" : ""}`, confidence: gc };
+  for (const id in r) r[id].triggered = r[id].confidence > 0 && r[id].value >= CFG[id].threshold;
+  return r;
+}
+let heroLines = [];
+function heroPush(html) { heroLines.push(html); if (heroLines.length > 9) heroLines.shift(); heroLog.innerHTML = heroLines.join("\n") + "\n<span class=\"t-acc\">✻</span> <span class=\"cursor\"></span>"; }
+function tick() {
+  const ev = SCRIPT[SIM.step % SCRIPT.length];
+  if (SIM.step && SIM.step % SCRIPT.length === 0) { Object.assign(SIM, { results: [], tokens: 18000, minutes: 3, idle: 0, lint: [] }); heroLines = []; }
+  SIM.step++;
+  SIM.minutes += 3.2; SIM.idle += 3.2;
+  const tool = TOOLS[SIM.step % TOOLS.length];
+  if (ev === "ok" || ev === "fail") {
+    const ok = ev === "ok"; SIM.results.push(ok); SIM.tokens += 3000 + (SIM.step * 7919 % 5000);
+    heroPush(ok ? `<span class="t-ok">⏺</span> ${tool}<span class="t-dim">(…)</span>  <span class="t-dim">⎿ ok</span>`
+                : `<span class="t-bad">⏺</span> ${tool}<span class="t-dim">(…)</span>  <span class="t-bad">⎿ exit 1</span>`);
+  } else if (ev.startsWith("lint:")) {
+    const n = +ev.slice(5); SIM.lint.push(n); SIM.results.push(true); SIM.tokens += 4000;
+    heroPush(`<span class="t-ok">⏺</span> Bash<span class="t-dim">(deno lint)</span>  <span class="t-dim">⎿ ${n} problem${n === 1 ? "" : "s"}</span>`);
+  } else if (ev === "prompt") {
+    SIM.idle = 0; SIM.tokens += 1500; heroPush(`<span class="t-key">&gt;</span> <span class="t-dim">user prompt</span>`);
+  } else if (ev === "compact") {
+    SIM.tokens = 42000; heroPush(`<span class="t-dim">✻ context compacted</span>`);
+  }
+  SIM.tokens = Math.min(SIM.tokens, SIM.limit * .97);
+  render();
+}
+function statusText(r) {
+  const part = (name, x) => x.confidence === 0 ? `${name} –` : `${name} ${f2(x.value)}${x.triggered ? "!" : ""}`;
+  const parts = [part("pain", r.pain), part("ctx", r.interoception), part("time", r.time), part("smell", r.smell), part("gut", r.gut)];
+  return parts.map((p) => p.endsWith("!") ? `<span class="hot">${p}</span>` : p).join(" · ");
+}
+
+/* sense cards */
+const IDS = ["pain","interoception","time","smell","gut"];
+const ARC = 2 * Math.PI * 42 * .75; // 270° gauge
+function renderCards() {
+  senseCards.innerHTML = IDS.map((id) => {
+    const a = (CFG[id].threshold * 270 - 135) * Math.PI / 180;
+    const x1 = 60 + 34 * Math.sin(a), y1 = 60 - 34 * Math.cos(a), x2 = 60 + 50 * Math.sin(a), y2 = 60 - 50 * Math.cos(a);
+    return `<article class="sense" id="card-${id}">
+      <div class="top"><span class="id">${id}</span><span class="hum">${t(`s.${id}.h`)}</span></div>
+      <svg class="gauge" viewBox="0 0 120 108" aria-hidden="true">
+        <circle class="trk" cx="60" cy="60" r="42" fill="none" stroke-width="9" stroke-linecap="round" stroke-dasharray="${ARC} 999" transform="rotate(135 60 60)"/>
+        <circle class="val" cx="60" cy="60" r="42" fill="none" stroke-width="9" stroke-linecap="round" stroke-dasharray="${ARC} 999" stroke-dashoffset="${ARC}" transform="rotate(135 60 60)"/>
+        <line class="thr" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke-width="2"/>
+        <text x="60" y="64" text-anchor="middle" font-size="20" class="num">0.00</text>
+        <text x="60" y="80" text-anchor="middle" class="sub">thr ${f2(CFG[id].threshold)}</text>
+      </svg>
+      <div class="state"></div>
+      <div class="lbl"></div>
+      <div class="conf"><span>${t("conf")}</span><div class="bar"><i style="width:0"></i></div><span class="cv">0.00</span></div>
+      <div class="what">${t(`s.${id}.w`)}</div>
+    </article>`;
+  }).join("");
+  render();
+}
+function render() {
+  const r = readings();
+  heroStatus.innerHTML = statusText(r);
+  for (const id of IDS) {
+    const c = document.getElementById(`card-${id}`); if (!c) continue;
+    const x = r[id];
+    c.classList.toggle("over", x.triggered);
+    c.querySelector(".val").setAttribute("stroke-dashoffset", String(ARC * (1 - x.value)));
+    c.querySelector(".num").textContent = x.confidence === 0 ? "–" : f2(x.value);
+    c.querySelector(".state").textContent = x.confidence === 0 ? t("state.none") : x.triggered ? `▲ ${t("state.over")}` : t("state.ok");
+    c.querySelector(".lbl").textContent = x.label;
+    c.querySelector(".conf i").style.width = `${x.confidence * 100}%`;
+    c.querySelector(".cv").textContent = f2(x.confidence);
+  }
+}
+let simTimer = null;
+function updateSimBtn() { simToggle.textContent = SIM.running ? `❚❚ ${t("sim.pause")}` : `▶ ${t("sim.play")}`; }
+function setSim(on) { SIM.running = on; clearInterval(simTimer); if (on) simTimer = setInterval(tick, 1500); updateSimBtn(); }
+simToggle.addEventListener("click", () => setSim(!SIM.running));
+
+/* flow pulses (SVG animateMotion) */
+(function pulses() {
+  if (reduce) return;
+  const g = document.getElementById("pulses"); const NS = "http://www.w3.org/2000/svg";
+  const legs = [["p1",0],["p2",.5],["p3",1],["p4",1.5],["p5",1.5],["p6",1.5]];
+  for (const [id, delay] of legs) {
+    const c = document.createElementNS(NS, "circle"); c.setAttribute("r", "4.5"); c.setAttribute("class", "pulse");
+    const m = document.createElementNS(NS, "animateMotion");
+    m.setAttribute("dur", "2s"); m.setAttribute("begin", `${delay}s`); m.setAttribute("repeatCount", "indefinite");
+    m.setAttribute("keyPoints", "0;1;1"); m.setAttribute("keyTimes", "0;.25;1"); m.setAttribute("calcMode", "linear");
+    const mp = document.createElementNS(NS, "mpath"); mp.setAttribute("href", `#${id}`);
+    m.appendChild(mp); c.appendChild(m); g.appendChild(c);
+  }
+})();
+
+/* ================= code viewer ================= */
+const CODE = {
+  "event.ts": `<span class="c">// src/core/event.ts  (PRD-FEAT-001)</span>
+<span class="k">export const</span> EVENT_KINDS = [
+  <span class="s">"prompt"</span>, <span class="s">"tool_call"</span>, <span class="s">"tool_result"</span>, <span class="s">"token_usage"</span>, <span class="s">"turn_end"</span>,
+] <span class="k">as const</span>;
+
+<span class="k">export type</span> <span class="f">HarnessEvent</span> = {
+  schemaVersion: <span class="f">number</span>;
+  ts: <span class="f">number</span>;            <span class="c">// ms since epoch</span>
+  session: <span class="f">string</span>;
+  kind: <span class="f">EventKind</span>;
+  tool?: <span class="f">string</span>;
+  ok?: <span class="f">boolean</span>;          <span class="c">// only on tool_result</span>
+  exitCode?: <span class="f">number</span>;
+  tokens?: { used: <span class="f">number</span>; limit?: <span class="f">number</span> };
+  signals?: <span class="f">number</span>;      <span class="c">// lint/check problems → smell</span>
+  source: <span class="f">EventSource</span>;   <span class="c">// "claude-code" | "codex"</span>
+};
+
+<span class="c">// Never throws. Unknown extra fields are dropped.</span>
+<span class="k">export function</span> <span class="f">parseEvent</span>(raw: <span class="f">unknown</span>): <span class="f">ParseResult</span> { <span class="c">/* … */</span> }`,
+  "sensor.ts": `<span class="c">// src/core/sensor.ts  (PRD-FEAT-002)</span>
+<span class="k">export type</span> <span class="f">SensorInput</span> = {
+  events: <span class="f">HarnessEvent</span>[];  <span class="c">// one session, in time order</span>
+  config: <span class="f">SenseConfig</span>;
+  now: <span class="f">number</span>;            <span class="c">// passed in, so sensors stay pure</span>
+};
+
+<span class="k">export type</span> <span class="f">Sensor</span> = {
+  id: <span class="f">string</span>;
+  human: <span class="f">string</span>;          <span class="c">// the human sense it borrows from</span>
+  category: <span class="f">Category</span>;
+  <span class="f">compute</span>(input: <span class="f">SensorInput</span>): { value; label; confidence };
+};
+
+<span class="k">export function</span> <span class="f">read</span>(sensor: <span class="f">Sensor</span>, input: <span class="f">SensorInput</span>): <span class="f">Reading</span> {
+  <span class="k">const</span> out = sensor.<span class="f">compute</span>(input);
+  <span class="k">const</span> value = <span class="f">round</span>(<span class="f">clamp01</span>(out.value));
+  <span class="k">const</span> confidence = <span class="f">round</span>(<span class="f">clamp01</span>(out.confidence));
+  <span class="k">return</span> { id: sensor.id, value, label: out.label, confidence, ts: input.now,
+    triggered: input.config.enabled &amp;&amp; confidence &gt; <span class="n">0</span> &amp;&amp; value &gt;= input.config.threshold };
+}`,
+  "pain.ts": `<span class="c">// src/core/sensors/pain.ts</span>
+<span class="k">const</span> STREAK_FULL = <span class="n">3</span>;
+<span class="k">const</span> RESULTS_FOR_FULL_CONFIDENCE = <span class="n">5</span>;
+
+<span class="k">export const</span> pain: <span class="f">Sensor</span> = {
+  id: <span class="s">"pain"</span>, human: <span class="s">"pain"</span>, category: <span class="s">"bodily"</span>,
+  <span class="f">compute</span>({ events, config, now }) {
+    <span class="k">const</span> results = <span class="f">inWindow</span>(events, config, now).<span class="f">filter</span>(
+      (e) =&gt; e.kind === <span class="s">"tool_result"</span> &amp;&amp; e.ok !== <span class="k">undefined</span>);
+    <span class="k">if</span> (results.length === <span class="n">0</span>)
+      <span class="k">return</span> { value: <span class="n">0</span>, label: <span class="s">"no tool results in window"</span>, confidence: <span class="n">0</span> };
+<span class="hl">    <span class="k">const</span> failed = results.<span class="f">filter</span>((e) =&gt; !e.ok).length;</span>
+<span class="hl">    <span class="k">let</span> streak = <span class="n">0</span>;</span>
+<span class="hl">    <span class="k">for</span> (<span class="k">let</span> i = results.length - <span class="n">1</span>; i &gt;= <span class="n">0</span> &amp;&amp; !results[i].ok; i--) streak++;</span>
+<span class="hl">    <span class="k">const</span> rate = failed / results.length;</span>
+<span class="hl">    <span class="k">const</span> raw = <span class="n">0.6</span> * rate + <span class="n">0.4</span> * Math.<span class="f">min</span>(streak / STREAK_FULL, <span class="n">1</span>);</span>
+    <span class="k">return</span> {
+      value: raw * config.gain,
+      label: <span class="s">\`\${failed} of \${results.length} calls failed…\`</span>,
+      confidence: Math.<span class="f">min</span>(results.length / RESULTS_FOR_FULL_CONFIDENCE, <span class="n">1</span>),
+    };
+  },
+};`,
+};
+let codeTab = "pain.ts";
+function renderCode() {
+  codeTabs.innerHTML = Object.keys(CODE).map((n) => `<button type="button" role="tab" aria-selected="${n === codeTab}" data-tab="${n}">${n}</button>`).join("");
+  codeView.innerHTML = CODE[codeTab];
+  codeNote.innerHTML = t(`code.n.${codeTab.replace(".ts", "")}`);
+}
+codeTabs.addEventListener("click", (e) => { const b = e.target.closest("[data-tab]"); if (b) { codeTab = b.dataset.tab; renderCode(); } });
+
+/* ================= pain lab ================= */
+let labResults = [true, true, false, true, false, false];
+function renderLab() {
+  const p = painOf(labResults);
+  labChips.innerHTML = labResults.length ? labResults.map((ok, i) => `<span class="chip ${ok ? "ok" : "no"}">${ok ? "✓" : "✗"} #${i + 1}</span>`).join("")
+    : `<span class="chip empty">tool_result …</span>`;
+  const rate = p.rate ?? 0, streak = p.streak ?? 0, raw = p.raw ?? 0;
+  labMath.innerHTML = `<div>failed = <b>${p.failed ?? 0}</b> · results = <b>${labResults.length}</b> · ${t("lab.streak")} = <b>${streak}</b></div>
+    <div>${t("lab.rate")} = ${p.failed ?? 0} / ${labResults.length || 1} = <b>${f2(rate)}</b></div>
+    <div>${t("lab.raw")} = 0.6 × ${f2(rate)} + 0.4 × min(${streak}/3, 1) = <b>${f2(raw)}</b></div>`;
+  const over = p.confidence > 0 && p.value >= .6;
+  labMeter.classList.toggle("over", over);
+  labMeter.querySelector("i").style.width = `${p.value * 100}%`;
+  labVal.textContent = f2(p.value) + (over ? " !" : "");
+  const out = { id: "pain", value: +f2(p.value), label: p.label, confidence: +f2(p.confidence), triggered: over };
+  labOut.innerHTML = "<span class=\"t-dim\">// read(pain, input)</span>\n" + JSON.stringify(out, null, 2)
+    .replace(/"(\w+)":/g, '<span class="t-key">"$1"</span>:')
+    .replace(/: "([^"]*)"/g, ': <span class="t-str">"$1"</span>')
+    .replace(/: (true|false|[\d.]+)/g, (m, v) => `: <span class="${v === "true" ? "t-bad" : "t-num"}">${v}</span>`);
+}
+labOk.addEventListener("click", () => { labResults.push(true); if (labResults.length > 14) labResults.shift(); renderLab(); });
+labFail.addEventListener("click", () => { labResults.push(false); if (labResults.length > 14) labResults.shift(); renderLab(); });
+labReset.addEventListener("click", () => { labResults = []; renderLab(); });
+
+/* ================= terminal player ================= */
+const S = (cls, s) => `<span class="${cls}">${esc(s)}</span>`;
+const SCENES = {
+  install: { title: "zsh — ~/code/my-app", lines: () => [
+    { c: t("c.clone") },
+    { cmd: "git clone https://github.com/netsi1964/netsi-agent-senses.git ~/netsi-agent-senses" },
+    { o: "Cloning into '/Users/you/netsi-agent-senses'...\nReceiving objects: 100% done." , cls: "t-dim" },
+    { c: t("c.ignore") },
+    { cmd: `echo ".netsi-agent-senses/" >> .gitignore` },
+    { c: t("c.start") },
+    { cmd: "claude --plugin-dir ~/netsi-agent-senses" },
+    { o: `${S("t-acc", "✻")} Claude Code\n  ${S("t-dim", "plugin")} netsi-agent-senses ${S("t-dim", "· hooks · mcp: senses · /senses · skill: senses")}`, raw: true },
+    { c: t("c.loaded") },
+    { prompt: "fix the failing date test in src/util" },
+  ]},
+  senses: { title: "claude — ~/code/my-app", lines: () => [
+    { prompt: "/senses" },
+    { o: `${S("t-ok", "⏺")} senses - senses_read ${S("t-dim", "(MCP)")}\n  ${S("t-dim", "⎿ 5 readings")}\n${S("t-ok", "⏺")} Bash(netsi-senses-dashboard)\n  ${S("t-dim", "⎿ http://127.0.0.1:47811/?token=7f3c…")}`, raw: true },
+    { o: `${S("t-ok", "⏺")} How the session feels right now:
+
+  | Sense         | Value | Conf. | Label                                    |
+  |---------------|-------|-------|------------------------------------------|
+  | pain          | ${S("t-bad","0.71")}  | 1.00  | 4 of 9 calls failed, last 3 in a row ${S("t-bad","▲ over")} |
+  | interoception | 0.42  | 1.00  | 84k of 200k tokens                       |
+  | time          | 0.31  | 1.00  | session 52 min, 4 min since last prompt  |
+  | smell         | 0.25  | 0.50  | 2 lint/check signals in latest runs      |
+  | gut           | 0.47  | 0.88  | weighted mean of 4 senses                |
+
+  Dashboard: ${S("t-num","http://127.0.0.1:47811/?token=7f3c…")}`, raw: true },
+    { status: `<span class="t-bad">pain 0.71!</span> · ctx 0.42 · time 0.31 · smell 0.25 · gut 0.47` },
+  ]},
+  tune: { title: "claude — MCP: senses", lines: () => [
+    { c: t("c.off") },
+    { o: `${S("t-key","→")} senses_set ${S("t-dim",'{"sense":"pain","enabled":false,"reason":"too noisy"}')}\n${S("t-bad","← error:")} the agent may only change gain, threshold, window;\n  not allowed: enabled (only the human can change these)`, raw: true },
+    { c: t("c.wide") },
+    { o: `${S("t-key","→")} senses_set ${S("t-dim",'{"sense":"pain","threshold":0.95,"reason":"flaky tests"}')}\n${S("t-bad","← error:")} pain.threshold = 0.95 is outside the human-set bounds [0.4, 0.85]`, raw: true },
+    { c: t("c.okt") },
+    { o: `${S("t-key","→")} senses_set ${S("t-dim",'{"sense":"pain","threshold":0.7,"reason":"suite has known flaky tests"}')}\n${S("t-ok","← ok:")} pain.threshold 0.6 → 0.7`, raw: true },
+    { c: t("c.audit") },
+    { cmd: "tail -1 .netsi-agent-senses/audit.jsonl" },
+    { o: `{${S("t-key",'"actor"')}:${S("t-str",'"agent"')},${S("t-key",'"type"')}:${S("t-str",'"config_change"')},${S("t-key",'"sense"')}:${S("t-str",'"pain"')},\n ${S("t-key",'"from"')}:${S("t-num","0.6")},${S("t-key",'"to"')}:${S("t-num","0.7")},${S("t-key",'"reason"')}:${S("t-str",'"suite has known flaky tests"')}}`, raw: true },
+  ]},
+  files: { title: "zsh — ~/code/my-app", lines: () => [
+    { cmd: "ls .netsi-agent-senses" },
+    { o: "audit.jsonl  dashboard.json  events.jsonl  senses.json", cls: "t-num" },
+    { c: t("c.ev") },
+    { cmd: "tail -2 .netsi-agent-senses/events.jsonl" },
+    { o: `{${S("t-key",'"schemaVersion"')}:1,${S("t-key",'"ts"')}:1794040512000,${S("t-key",'"session"')}:${S("t-str",'"a41635b9"')},${S("t-key",'"kind"')}:${S("t-str",'"tool_result"')},${S("t-key",'"tool"')}:${S("t-str",'"Bash"')},${S("t-key",'"ok"')}:${S("t-bad","false")},${S("t-key",'"exitCode"')}:1,${S("t-key",'"source"')}:${S("t-str",'"claude-code"')}}\n{${S("t-key",'"schemaVersion"')}:1,${S("t-key",'"ts"')}:1794040519000,${S("t-key",'"session"')}:${S("t-str",'"a41635b9"')},${S("t-key",'"kind"')}:${S("t-str",'"token_usage"')},${S("t-key",'"tokens"')}:{${S("t-key",'"used"')}:84210},${S("t-key",'"source"')}:${S("t-str",'"claude-code"')}}`, raw: true },
+    { c: t("c.cfg") },
+    { cmd: "cat .netsi-agent-senses/senses.json" },
+    { o: `{
+  ${S("t-key",'"senses"')}: {
+    ${S("t-key",'"pain"')}: {
+      ${S("t-key",'"enabled"')}: true, ${S("t-key",'"gain"')}: ${S("t-num","1")}, ${S("t-key",'"threshold"')}: ${S("t-num","0.7")}, ${S("t-key",'"window"')}: ${S("t-num","300")},
+      ${S("t-key",'"bounds"')}: { ${S("t-key",'"gain"')}: [${S("t-num","0.75")}, ${S("t-num","1.5")}], ${S("t-key",'"threshold"')}: [${S("t-num","0.4")}, ${S("t-num","0.85")}], ${S("t-key",'"window"')}: [${S("t-num","120")}, ${S("t-num","900")}] }
+    },
+    ${S("t-dim","…")}
+  }
+}`, raw: true },
+  ]},
+};
+let currentScene = "install", playToken = 0, autoNext = true;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+async function playScene(name, instantIfReduce) {
+  currentScene = name; const my = ++playToken;
+  document.querySelectorAll("[data-scene]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.scene === name)));
+  const sc = SCENES[name];
+  playerTitle.textContent = sc.title; playerCaption.textContent = t(`cap.${name}`);
+  let buf = ""; const out = playerOut;
+  const show = (extra = "") => { out.innerHTML = buf + extra; out.scrollTop = out.scrollHeight; };
+  const fast = reduce;
+  for (const L of sc.lines()) {
+    if (my !== playToken) return;
+    if (L.c) { buf += S("t-dim", L.c) + "\n"; show(); if (!fast) await sleep(350); }
+    else if (L.cmd || L.prompt) {
+      const pre = L.cmd ? `${S("t-ok", "❯")} ` : `${S("t-key", ">")} `; const text = L.cmd || L.prompt;
+      if (fast) { buf += pre + esc(text) + "\n"; show(); continue; }
+      for (let i = 1; i <= text.length; i += 2) { if (my !== playToken) return; show(pre + esc(text.slice(0, i)) + '<span class="cursor"></span>'); await sleep(22); }
+      buf += pre + esc(text) + "\n"; show(); await sleep(400);
+    } else if (L.o) { buf += (L.raw ? L.o : S(L.cls || "", L.o)) + "\n"; show(); if (!fast) await sleep(700); }
+    else if (L.status) { buf += `\n${S("t-dim", "──── status line ────")}\n${L.status}\n`; show(); if (!fast) await sleep(500); }
+    if (!fast) await sleep(120);
+  }
+  show('<span class="cursor"></span>');
+  if (fast || !autoNext) return;
+  await sleep(4200);
+  if (my !== playToken || !autoNext) return;
+  const order = Object.keys(SCENES); playScene(order[(order.indexOf(name) + 1) % order.length]);
+}
+sceneBtns.addEventListener("click", (e) => { const b = e.target.closest("[data-scene]"); if (b) { autoNext = false; playScene(b.dataset.scene); } });
+replay.addEventListener("click", () => { playScene(currentScene); });
+
+/* ================= copy buttons ================= */
+document.querySelectorAll(".copy").forEach((b) => b.addEventListener("click", async () => {
+  const pre = b.parentElement.querySelector("pre");
+  try { await navigator.clipboard.writeText(pre.textContent); }
+  catch (e) { const r = document.createRange(); r.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+  b.textContent = t("inst.copied"); b.classList.add("done");
+  setTimeout(() => { b.textContent = t("inst.copy"); b.classList.remove("done"); }, 1600);
+}));
+
+/* ================= boot ================= */
+for (let i = 0; i < 9; i++) tick();   // start mid-session so the page is complete at rest
+applyLang();
+setSim(SIM.running);
+</script>
+</body>
+</html>
